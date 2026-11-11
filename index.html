@@ -206,6 +206,7 @@
   body.tvmode .trick .empty { padding: 14px 0; }
   body.tvmode .table .banner { position: static; transform: none; width: 100%; padding: 8px 10px; font-size: 0.85rem; animation: pop2 0.35s both; }
   body.tvmode #preview { margin-top: auto; }
+  body.tvmode .handwrap { padding-top: 36px; }
   .tvnote { display: none; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.8rem; }
   body.tvmode .tvnote { display: block; }
 
@@ -294,6 +295,19 @@
   .srow .shipg { font-size: 11px; }
   .srow .nm2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+  /* stage 3: computer players, turn timer */
+  .sel { background: rgba(0,0,0,0.3); color: var(--ink); border: 2px solid var(--line); border-radius: 10px; padding: 7px 10px; font: inherit; font-weight: 700; font-size: 0.95em; }
+  .sel:focus { border-color: var(--gold); outline: none; }
+  .setrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: 700; }
+  .botb { display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 1px; color: #0b1a2e; background: #a9bdd2; border-radius: 5px; padding: 0 4px; vertical-align: 2px; margin-left: 4px; }
+  .xbtn { margin-left: auto; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: var(--ink); font-weight: 800; flex: 0 0 auto; }
+  .xbtn:hover { border-color: var(--red); color: var(--red); }
+  .prow .host + .xbtn { margin-left: 8px; }
+  .tleft { font-weight: 800; font-size: 0.75rem; color: #0b1a2e; background: #7fd3ff; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+  .tleft:empty { display: none; }
+  .tleft.low { background: #ff8a7a; animation: nudge 0.9s ease-in-out infinite; }
+  .topbar .tleft { font-size: 0.82rem; padding: 4px 9px; }
+  .seat .tleft { font-size: 0.85em; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
@@ -353,6 +367,8 @@
     <div class="card-ui stack" id="hostBox">
       <label class="toggle" id="optPreviewRow"><input type="checkbox" id="optPreview" checked> Show the “if you play this” preview</label>
       <label class="toggle"><input type="checkbox" id="optCross" checked> Cross out played cards on the gangplank</label>
+      <div class="setrow"><label for="optTimer">Turn timer</label><select class="sel" id="optTimer"><option value="0">Off</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select></div>
+      <div class="setrow"><button class="btn ghost small" id="addBotBtn">+ Add computer player</button><select class="sel" id="optBots" aria-label="Computer skill"><option value="easy">Relaxed</option><option value="hard">Sharp</option></select></div>
       <button class="btn" id="startBtn">Set sail</button>
       <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.85rem" id="startHint"></div>
     </div>
@@ -367,6 +383,7 @@
     <span class="t1">UNDERTOW</span>
     <span class="t2" id="gRound"></span>
     <span class="sp"></span>
+    <span class="tleft" id="tleftTop"></span>
     <button class="pill mutebtn short" onclick="toggleMute()">🔊</button>
     <button class="pill" id="scoresBtn">Scores</button>
   </div>
@@ -405,6 +422,8 @@
       <span class="lbl" style="margin: 0" id="tvCount">Sailors</span>
       <div class="tvplist" id="tvPlist"></div>
       <label class="toggle"><input type="checkbox" id="tvCross" checked> Cross out played cards (gangplank and ship's log)</label>
+      <div class="setrow"><label for="tvTimer">Turn timer</label><select class="sel" id="tvTimer"><option value="0">Off</option><option value="30">30 seconds</option><option value="60">60 seconds</option></select></div>
+      <div class="setrow"><button class="btn ghost small" id="tvAddBot">+ Add computer player</button><select class="sel" id="tvBots" aria-label="Computer skill"><option value="easy">Relaxed computers</option><option value="hard">Sharp computers</option></select></div>
       <button class="btn" id="tvStart">Set sail</button>
       <div style="color: var(--muted); font-weight: 700; text-align: center" id="tvHint"></div>
     </div>
@@ -468,7 +487,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -621,7 +640,44 @@ const trickOf = s => (s.trick || []).filter(Boolean);
 const playedOf = s => (Array.isArray(s.played) ? s.played : Object.values(s.played || {})).filter(v => v != null);
 const scores = () => room.scores || {};
 // with a TV, the first sailor to join is the lead: their phone can start games and deal (as a request the TV carries out)
-const lead = () => order()[0];
+const lead = () => order().find(id => !(players()[id] || {}).bot) || order()[0];
+const isBot = id => !!(players()[id] || {}).bot;
+const setting = (k, d) => room && room.settings && room.settings[k] != null ? room.settings[k] : d;
+const timerMs = () => (+setting("timer", 0) || 0) * 1000;
+function changeSetting(patch) { if (isHost) roomRef.child("settings").update(patch); else if (isLead()) sendCmd("set", { patch }); }
+// ---------- computer players ----------
+const BOT_NAMES = ["Bosun Bot", "Old Salt", "Iron Gull", "Rusty Anchor", "Captain Cog", "Deckhand Dot"];
+function addBot() { if (isHost) brainAddBot(); else if (isLead()) sendCmd("bot"); }
+function brainAddBot() {
+  const ps = players(); if (Object.keys(ps).length >= MAX_P || room.state.phase !== "lobby") return;
+  const names = new Set(Object.values(ps).map(p => p.name)), cols = new Set(Object.values(ps).map(p => p.color));
+  const name = BOT_NAMES.find(n => !names.has(n)) || "Bot " + (Object.keys(ps).length + 1), color = COLORS.find(c => !cols.has(c)) || COLORS[0];
+  roomRef.child("players/bot_" + Math.random().toString(36).slice(2, 8)).set({ name, color, joinedAt: TS, online: true, bot: true });
+}
+function removeBot(id) { if (isHost) { if (isBot(id) && room.state.phase === "lobby") roomRef.child("players/" + id).remove(); } else if (isLead()) sendCmd("kick", { id }); }
+// how a computer (or a timed-out player) picks a card. "hard": dodge tricks; "easy": mostly low cards, a bit random
+function botChoose(hand, s, me, level) {
+  const trick = trickOf(s), legal = legalCards(hand, trick, s.first);
+  if (legal.length === 1) return legal[0];
+  if (level === "easy") return Math.random() < 0.6 ? Math.min(...legal) : legal[Math.floor(Math.random() * legal.length)];
+  const played = new Set(playedOf(s)), n = order().length;
+  const higherOut = c => { const su = suitOf(c); let k = 0; for (let v = c + 1; v <= su.hi; v++) if (!played.has(v) && !hand.includes(v)) k++; return k; };
+  if (!trick.length) return legal.slice().sort((a, b) => (higherOut(b) - higherOut(a)) || (a - b))[0]; // lead something others can beat
+  const last = trick.length === n - 1, safe = [], risky = [];
+  legal.forEach(c => (resolve(trick.concat([{ p: me, c }])).winner === me ? risky : safe).push(c));
+  if (safe.length) {
+    if (last) return Math.max(...safe); // nothing can change now: dump the most dangerous card
+    // others still to play: dump a high card from a suit that isn't leading the trick
+    const cur = resolve(trick), off = safe.filter(c => !cur.tied.includes(suitOf(c).k));
+    return Math.max(...(off.length ? off : safe));
+  }
+  return last ? Math.max(...risky) : Math.min(...risky); // taking it anyway: dump the highest; otherwise go low and hope
+}
+function botLeader(s) {
+  const me = s.res.winner, tot = id => (scores()[id] || 0) + ((s.taken || {})[id] || 0);
+  if (setting("bots", "hard") === "easy") { const o = order(); return o[Math.floor(Math.random() * o.length)]; }
+  return order().filter(id => id !== me).sort((a, b) => tot(a) - tot(b))[0] || me; // put the game leader on the spot
+}
 const isLead = () => !!room.tv && lead() === uid;
 function sendCmd(cmd, extra) { return db.ref(`rooms/${code}/pub/moves/${uid}`).set(Object.assign({ cmd, t: TS }, extra || {})); }
 
@@ -633,23 +689,39 @@ function brainTick() {
   const s = room.state, key = s.phase + ":" + s.seq;
   if (key !== brainKey) { clearTimeout(brainT); brainKey = key; }
   brainCmds(s);
+  const botDelay = () => (room.tv ? 1400 : 950) + Math.random() * 700;
   if (s.phase === "play") {
     const mv = (room.moves || {})[s.turn];
-    if (mv && mv.seq === s.seq && mv.card != null) { clearTimeout(brainT); return applyPlay(s, s.turn, mv.card); }
+    if (mv && mv.seq === s.seq && mv.card != null) { clearTimeout(brainT); return humanPlay(s, s.turn, mv.card); }
     clearTimeout(brainT);
     const p = players()[s.turn];
-    if (p && p.online === false) brainT = setTimeout(() => autoPlay(s.seq), AUTO_MS);
+    if (p && p.bot) { brainT = setTimeout(() => autoPlay(s.seq, "bot"), botDelay()); return; }
+    let wait = Infinity, why = "time";
+    if (p && p.online === false) { wait = AUTO_MS; why = "away"; }
+    if (timerMs()) wait = Math.min(wait, (s.turnAt || s.at) + timerMs() - serverNow());
+    if (wait < Infinity) brainT = setTimeout(() => autoPlay(s.seq, why), Math.max(50, wait));
   } else if (s.phase === "trickEnd") {
     clearTimeout(brainT); brainT = setTimeout(() => afterTrick(s.seq), Math.max(50, s.at + TRICK_MS - serverNow()));
   } else if (s.phase === "captain") {
     const mv = (room.moves || {})[s.res.winner];
     if (mv && mv.seq === s.seq && mv.lead && players()[mv.lead]) { clearTimeout(brainT); return startTrick(s, mv.lead); }
     clearTimeout(brainT);
-    const p = players()[s.res.winner];
-    if (p && p.online === false) brainT = setTimeout(() => { if (room.state.seq === s.seq) startTrick(room.state, nextSeat(s.res.winner)); }, AUTO_MS);
+    const p = players()[s.res.winner], pickFor = () => { if (room.state.seq === s.seq && room.state.phase === "captain") startTrick(room.state, botLeader(room.state)); };
+    if (p && p.bot) { brainT = setTimeout(pickFor, botDelay() + 600); return; }
+    let wait = Infinity;
+    if (p && p.online === false) wait = AUTO_MS;
+    if (timerMs()) wait = Math.min(wait, s.at + timerMs() - serverNow());
+    if (wait < Infinity) brainT = setTimeout(pickFor, Math.max(50, wait));
   } else if (s.phase === "roundEnd" && room.tv) {
     clearTimeout(brainT); brainT = setTimeout(() => { if (room.state.phase === "roundEnd" && room.state.seq === s.seq) deal(); }, Math.max(50, s.at + NEXT_MS - serverNow()));
   }
+}
+// the table takes the card out of the player's hand as it accepts the move, so hands never get out of step
+let applying = null;
+async function humanPlay(s, p, card) {
+  if (applying === s.seq) return; applying = s.seq;
+  await db.ref(`rooms/${code}/hands/${p}`).transaction(h => (h || []).filter(c => c != null && c !== card));
+  applyPlay(s, p, card);
 }
 const handledCmds = new Set();
 function brainCmds(s) {
@@ -657,7 +729,9 @@ function brainCmds(s) {
   const mv = (room.moves || {})[lead()];
   if (!mv || !mv.cmd || !(mv.t > (s.at || 0))) return;
   const k = mv.cmd + ":" + mv.t; if (handledCmds.has(k)) return; handledCmds.add(k);
-  if (mv.cmd === "set" && s.phase === "lobby") roomRef.child("settings/cross").set(!!mv.cross);
+  if (mv.cmd === "set" && s.phase === "lobby") roomRef.child("settings").update(mv.patch || { cross: !!mv.cross });
+  else if (mv.cmd === "bot" && s.phase === "lobby") brainAddBot();
+  else if (mv.cmd === "kick" && s.phase === "lobby" && isBot(mv.id)) roomRef.child("players/" + mv.id).remove();
   else if (mv.cmd === "start" && s.phase === "lobby") startGame();
   else if (mv.cmd === "deal" && s.phase === "roundEnd") deal();
   else if (mv.cmd === "again" && s.phase === "gameOver") backToLobby();
@@ -665,7 +739,7 @@ function brainCmds(s) {
 function applyPlay(s, p, card) {
   if (room.state.seq !== s.seq) return;
   const trick = trickOf(s).concat([{ p, c: card }]), played = playedOf(s).concat([card]);
-  if (trick.length < order().length) return setState({ trick, played, turn: nextSeat(p), seq: s.seq + 1, first: null });
+  if (trick.length < order().length) return setState({ trick, played, turn: nextSeat(p), seq: s.seq + 1, first: null, turnAt: TS });
   const res = resolve(trick);
   setState({ phase: "trickEnd", trick, played, turn: null, seq: s.seq + 1, first: null, res, at: TS });
 }
@@ -677,7 +751,7 @@ function afterTrick(seq) {
   startTrick(Object.assign({}, s, { taken }), s.res.winner);
 }
 function startTrick(s, leader) {
-  setState({ phase: "play", trick: null, turn: leader, leader, trickNo: s.trickNo + 1, seq: s.seq + 1, taken: s.taken || {}, res: s.phase === "captain" ? Object.assign({}, s.res, { pickedBy: s.res.winner, picked: leader }) : null, at: TS });
+  setState({ phase: "play", trick: null, turn: leader, leader, turnAt: TS, trickNo: s.trickNo + 1, seq: s.seq + 1, taken: s.taken || {}, res: s.phase === "captain" ? Object.assign({}, s.res, { pickedBy: s.res.winner, picked: leader }) : null, at: TS });
 }
 function endRound(s, taken) {
   const sc = Object.assign({}, scores()), o = order();
@@ -699,16 +773,18 @@ async function dealNow() {
   const upd = {}; let leader = o[0];
   o.forEach((id, i) => { const h = deck.slice(i * per, (i + 1) * per).sort((a, b) => a - b); if (h.includes(fc)) leader = id; upd[`rooms/${code}/hands/${id}`] = h; });
   await db.ref().update(upd);
-  setState({ phase: "play", order: o, round: (s.round || 0) + 1, trickNo: 1, perHand: per, sinkAt: sinkAt(n), turn: leader, leader, first: fc, trick: null, played: null, taken: null, res: null, seq: (s.seq || 0) + 1, at: TS });
+  setState({ phase: "play", order: o, turnAt: TS, round: (s.round || 0) + 1, trickNo: 1, perHand: per, sinkAt: sinkAt(n), turn: leader, leader, first: fc, trick: null, played: null, taken: null, res: null, seq: (s.seq || 0) + 1, at: TS });
 }
-async function autoPlay(seq) {
+async function autoPlay(seq, why) {
   const s = room.state; if (s.seq !== seq || s.phase !== "play") return;
   const p = s.turn, hs = await db.ref(`rooms/${code}/hands/${p}`).once("value"), hand = (hs.val() || []).filter(v => v != null);
-  if (!hand.length || room.state.seq !== seq) return;
-  const card = Math.min(...legalCards(hand, trickOf(s), s.first));
+  if (!hand.length || room.state.seq !== seq || applying === seq) return;
+  applying = seq;
+  const card = botChoose(hand, s, p, why === "bot" ? setting("bots", "hard") : "hard");
   await db.ref(`rooms/${code}/hands/${p}`).set(hand.filter(c => c !== card));
   applyPlay(s, p, card);
-  toast(`${nameOf(p)} is away, so a card was played for them`);
+  if (why === "away") toast(`${nameOf(p)} is away, so a card was played for them`);
+  else if (why === "time") toast(`${nameOf(p)} ran out of time, so a card was played for them`);
 }
 let starting = false;
 async function startGame() {
@@ -724,11 +800,15 @@ $("startBtn").onclick = async () => {
   if (isLead()) { $("startBtn").disabled = true; await sendCmd("start"); return; }
   if (!isHost) return;
   $("startBtn").disabled = true;
-  await roomRef.child("settings").set({ preview: $("optPreview").checked, cross: $("optCross").checked });
+  await roomRef.child("settings").update({ preview: $("optPreview").checked, cross: $("optCross").checked, timer: +$("optTimer").value, bots: $("optBots").value });
   await startGame();
   $("startBtn").disabled = false;
 };
-$("optCross").onchange = () => { if (isLead()) sendCmd("set", { cross: $("optCross").checked }); };
+$("optCross").onchange = () => changeSetting({ cross: $("optCross").checked });
+$("optPreview").onchange = () => changeSetting({ preview: $("optPreview").checked });
+$("optTimer").onchange = () => changeSetting({ timer: +$("optTimer").value });
+$("optBots").onchange = () => changeSetting({ bots: $("optBots").value });
+$("addBotBtn").onclick = addBot;
 function nextRound() { if (room.state.phase !== "roundEnd") return; if (isHost) deal(); else if (isLead()) sendCmd("deal"); }
 function backToLobby() { if (!isHost) { if (isLead() && room.state.phase === "gameOver") sendCmd("again"); return; } closeSheet(); roomRef.update({ scores: null, log: null, moves: null, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, at: TS } }); Object.keys(players()).forEach(id => db.ref(`rooms/${code}/hands/${id}`).remove()); }
 
@@ -747,7 +827,6 @@ async function playSelected() {
   const el = document.querySelector(`.hcard[data-c="${card}"]`); if (el) el.classList.add("playing");
   if (navigator.vibrate) navigator.vibrate(25);
   await db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, card });
-  await db.ref(`rooms/${code}/hands/${uid}`).transaction(h => (h || []).filter(c => c != null && c !== card));
 }
 $("playBtn").onclick = playSelected;
 // cards overlap, so a tap picks whichever card's visible slice is under the finger (keyboard presses use the focused card)
@@ -771,7 +850,7 @@ function render() {
   const s = room.state;
   if (s.phase === "lobby") { show("vLobby"); closeSheet(); wasMyTurn = false; return renderLobby(); }
   show("vGame");
-  renderTop(s); renderSeats(s); renderTable(s, PV()); renderHand(); renderPreview(); renderGang();
+  renderTop(s); renderSeats(s); renderTable(s, PV()); renderHand(); renderPreview(); renderGang(); paintTimers();
   const myTurn = s.phase === "play" && s.turn === uid;
   if (myTurn && !wasMyTurn) { sfx("turn"); if (navigator.vibrate) navigator.vibrate(room.tv ? [40, 60, 40] : 30); }
   wasMyTurn = myTurn;
@@ -786,11 +865,13 @@ function renderLobby() {
   if ($("qr").dataset.u !== url) { $("qr").dataset.u = url; $("qr").innerHTML = ""; try { new QRCode($("qr"), { text: url, width: 136, height: 136, colorDark: "#0b1a2e", colorLight: "#ffffff" }); } catch (e) {} }
   const ids = order(), n = ids.length;
   $("lobbyCount").textContent = `Sailors · ${n} of 6`;
-  $("lobbyList").innerHTML = ids.map(id => { const p = players()[id]; return `<div class="prow">${avatar(p, 34)}<span>${esc(p.name)}${id === uid ? " (you)" : ""}</span>${(room.tv ? id === ids[0] : id === room.hostUid) ? `<span class="host">${room.tv ? "LEAD" : "HOST"}</span>` : ""}${p.online === false ? '<span class="host" style="color:var(--red)">AWAY</span>' : ""}</div>`; }).join("");
   const ctl = isHost || isLead();
+  $("lobbyList").innerHTML = ids.map(id => { const p = players()[id]; return `<div class="prow">${avatar(p, 34)}<span>${esc(p.name)}${id === uid ? " (you)" : ""}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${(room.tv ? id === lead() : id === room.hostUid) ? `<span class="host">${room.tv ? "LEAD" : "HOST"}</span>` : ""}${p.online === false ? '<span class="host" style="color:var(--red)">AWAY</span>' : ""}${p.bot && ctl ? `<button class="xbtn" onclick="removeBot('${id}')" aria-label="Remove ${esc(p.name)}">✕</button>` : ""}</div>`; }).join("");
+  const sync = (el, v) => { if (document.activeElement !== el) { if (el.type === "checkbox") el.checked = v; else el.value = String(v); } };
+  sync($("optPreview"), setting("preview", true) !== false); sync($("optCross"), setting("cross", true) !== false); sync($("optTimer"), setting("timer", 0)); sync($("optBots"), setting("bots", "hard"));
+  $("addBotBtn").disabled = n >= MAX_P;
   $("hostBox").classList.toggle("hidden", !ctl); $("guestBox").classList.toggle("hidden", ctl);
-  $("guestBox").textContent = room.tv ? `Waiting for ${n ? nameOf(ids[0]) : "the lead"} or the table screen to set sail…` : "Waiting for the host to set sail…";
-  if (room.tv && document.activeElement !== $("optCross")) $("optCross").checked = !room.settings || room.settings.cross !== false;
+  $("guestBox").textContent = room.tv ? `Waiting for ${n ? nameOf(lead()) : "the lead"} or the table screen to set sail…` : "Waiting for the host to set sail…";
   $("startBtn").disabled = n < MIN_P || n > MAX_P;
   if (room.tv && n >= MIN_P) $("startBtn").disabled = false;
   $("startHint").textContent = room.tv && n >= MIN_P ? `${n} sailors · watch the table screen once you set sail` : n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points`;
@@ -806,7 +887,7 @@ function seatHTML(id, s, mine) {
   return `<div class="opp ${turn ? "turn" : ""}" data-seat="${id}">
       <div class="avwrap">${avatar(p, mine ? 34 : 42)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
       ${mine ? `<div style="display:flex;flex-direction:column"><span class="nm">You</span><span class="meta"><b class="${grew ? "bump" : ""}" style="font-weight:800">${taken}</b> taken · ${(scores()[id] || 0)} pts</span></div>` :
-      `<span class="nm">${esc(p.name)}</span><span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
+      `<span class="nm">${esc(p.name)}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${turn ? '<span class="tleft"></span>' : ""}<span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
     </div>`;
 }
 function renderSeats(s) {
@@ -1015,6 +1096,26 @@ function tickCounts(root) {
     const iv = setInterval(() => { v++; el.textContent = v; sfx("tally"); if (v >= to) clearInterval(iv); }, 260);
   });
 }
+// ---------- turn timer countdowns ----------
+function timeLeft() {
+  if (!room || !room.state || !timerMs()) return null;
+  const s = room.state; let who, from;
+  if (s.phase === "play") { who = s.turn; from = s.turnAt || s.at; } else if (s.phase === "captain") { who = s.res.winner; from = s.at; } else return null;
+  if (!who || isBot(who)) return null;
+  return { who, t: Math.max(0, Math.ceil((from + timerMs() - serverNow()) / 1000)) };
+}
+let buzzedSeq = null;
+function paintTimers() {
+  const L = timeLeft();
+  document.querySelectorAll(".tleft").forEach(el => {
+    const txt = !L ? "" : el.id === "tleftTop" ? (L.who === uid ? `${L.t}s left` : "") : `${L.t}s`;
+    if (el.textContent !== txt) el.textContent = txt;
+    el.classList.toggle("low", !!L && L.t <= 10);
+  });
+  if (L && L.who === uid && L.t <= 10 && L.t > 0 && buzzedSeq !== room.state.seq) { buzzedSeq = room.state.seq; if (navigator.vibrate) navigator.vibrate([60, 60, 60]); sfx("turn"); }
+}
+setInterval(paintTimers, 500);
+
 // ---------- TV: the shared table ----------
 const NEXT_MS = 15000; // with a TV, the next round deals itself after this long
 let tvDealt = null, tvArrowKey = null, prevTaken = {}, prevPlayed = new Set();
@@ -1024,25 +1125,31 @@ function renderTV() {
   show("vTVGame");
   $("tvRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)} of ${s.perHand}`;
   $("tvCode2").textContent = code;
-  tvSeats(s); renderTable(s, TVV()); tvSide(s); tvDeal(s); tvArrow(s); tvOverlay(s);
+  tvSeats(s); renderTable(s, TVV()); tvSide(s); tvDeal(s); tvArrow(s); tvOverlay(s); paintTimers();
 }
 function renderTVLobby() {
   $("tvCode").textContent = code;
   const url = location.origin + location.pathname + "?room=" + code, qrs = Math.round(Math.min(320, Math.max(160, innerHeight * 0.32)));
   if ($("tvQr").dataset.u !== url + qrs) { $("tvQr").dataset.u = url + qrs; $("tvQr").innerHTML = ""; try { new QRCode($("tvQr"), { text: url, width: qrs, height: qrs, colorDark: "#0b1a2e", colorLight: "#ffffff" }); } catch (e) {} }
   $("tvUrl").textContent = (location.host + location.pathname).replace(/index\.html$/, "");
-  const ids = order(), n = ids.length, key = ids.map(id => id + (players()[id].online === false ? "0" : "1") + players()[id].name).join(",");
+  const ids = order(), n = ids.length, key = ids.map(id => id + (players()[id].online === false ? "0" : "1") + players()[id].name).join(",") + "|" + lead();
   $("tvCount").textContent = `Sailors · ${n} of 6`;
   if ($("tvPlist").dataset.key !== key) {
     $("tvPlist").dataset.key = key;
-    $("tvPlist").innerHTML = n ? ids.map((id, i) => { const p = players()[id]; return `<div class="tvp" style="animation-delay:${i * 0.05}s">${avatar(p, 52)}<span>${esc(p.name)}</span>${i === 0 ? '<span class="host">LEAD</span>' : ""}${p.online === false ? '<span class="host away">AWAY</span>' : ""}</div>`; }).join("") : '<div class="tvempty">Nobody aboard yet. Scan the code to join.</div>';
+    $("tvPlist").innerHTML = n ? ids.map((id, i) => { const p = players()[id]; return `<div class="tvp" style="animation-delay:${i * 0.05}s">${avatar(p, 52)}<span>${esc(p.name)}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${id === lead() && !p.bot ? '<span class="host">LEAD</span>' : ""}${p.online === false ? '<span class="host away">AWAY</span>' : ""}${p.bot ? `<button class="xbtn" onclick="removeBot('${id}')" aria-label="Remove ${esc(p.name)}">✕</button>` : ""}</div>`; }).join("") : '<div class="tvempty">Nobody aboard yet. Scan the code to join.</div>';
   }
-  $("tvCross").checked = !room.settings || room.settings.cross !== false;
+  $("tvCross").checked = setting("cross", true) !== false;
+  if (document.activeElement !== $("tvTimer")) $("tvTimer").value = String(setting("timer", 0));
+  if (document.activeElement !== $("tvBots")) $("tvBots").value = setting("bots", "hard");
+  $("tvAddBot").disabled = n >= MAX_P;
   $("tvStart").disabled = n < MIN_P || n > MAX_P;
-  $("tvHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points. ${nameOf(ids[0])} can also set sail from their phone.`;
+  $("tvHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points. ${nameOf(lead())} can also set sail from their phone.`;
 }
-$("tvStart").onclick = async () => { if (!isTV) return; $("tvStart").disabled = true; await roomRef.child("settings").set({ preview: false, cross: $("tvCross").checked }); await startGame(); };
-$("tvCross").onchange = () => { if (isTV) roomRef.child("settings/cross").set($("tvCross").checked); };
+$("tvStart").onclick = async () => { if (!isTV) return; $("tvStart").disabled = true; await roomRef.child("settings").update({ preview: false, cross: $("tvCross").checked, timer: +$("tvTimer").value, bots: $("tvBots").value }); await startGame(); };
+$("tvCross").onchange = () => { if (isTV) changeSetting({ cross: $("tvCross").checked }); };
+$("tvTimer").onchange = () => { if (isTV) changeSetting({ timer: +$("tvTimer").value }); };
+$("tvBots").onchange = () => { if (isTV) changeSetting({ bots: $("tvBots").value }); };
+$("tvAddBot").onclick = () => { if (isTV) brainAddBot(); };
 const seatEl = id => document.querySelector(`#tvSeats .seat[data-seat="${id}"]`);
 function leftOf(id, s) { const played = trickOf(s).some(t => t.p === id) ? 1 : 0; return s.phase === "play" ? s.perHand - (s.trickNo - 1) - played : Math.max(0, s.perHand - s.trickNo); }
 function tvSeats(s) {
@@ -1058,7 +1165,7 @@ function tvSeats(s) {
     const grew = prevTaken[id] != null && taken > prevTaken[id]; prevTaken[id] = taken;
     el.classList.toggle("turn", turn);
     el.innerHTML = `<div class="avwrap">${avatar(p, 54)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
-      <span class="nm">${esc(p.name)}</span><span class="fan">${Array.from({ length: Math.min(left, 15) }, () => '<span class="back"></span>').join("")}</span>
+      <span class="nm">${esc(p.name)}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${turn ? '<span class="tleft"></span>' : ""}<span class="fan">${Array.from({ length: Math.min(left, 15) }, () => '<span class="back"></span>').join("")}</span>
       <span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken · ${scores()[id] || 0} pts</span>`;
   });
 }
@@ -1141,7 +1248,7 @@ function tvCountdown() {
   const el = $("tvNext"); if (!el || !room || !room.state) return;
   const s = room.state;
   if (s.phase === "roundEnd") el.textContent = `Round ${s.round + 1} deals in ${Math.max(0, Math.ceil((s.at + NEXT_MS - serverNow()) / 1000))}s`;
-  else if (s.phase === "gameOver") el.textContent = `${nameOf(order()[0])} can also start a new game from their phone`;
+  else if (s.phase === "gameOver") el.textContent = `${nameOf(lead())} can also start a new game from their phone`;
 }
 setInterval(() => { if (isTV && room && room.state && room.state.phase === "roundEnd") tvCountdown(); }, 500);
 window.addEventListener("resize", () => { if (isTV && room && room.state) { $("tvSeats").dataset.key = ""; renderTV(); } });
