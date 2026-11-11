@@ -55,6 +55,10 @@
   .pc { --w: var(--cw); position: relative; width: var(--w); height: calc(var(--w) * 1.43); border-radius: calc(var(--w) * 0.1); padding: calc(var(--w) * 0.05); background: linear-gradient(170deg, #f5eddc, #e2d3b4); box-shadow: 0 5px 14px rgba(0,0,0,0.55); display: flex; flex-direction: column; align-items: center; color: #2b2116; flex: 0 0 auto; overflow: hidden; }
   .pc img { display: block; width: 100%; height: 76%; object-fit: cover; border-radius: calc(var(--w) * 0.06); outline: 2px solid var(--c); outline-offset: -2px; }
   .pc .num { position: absolute; left: 1px; top: 1px; width: calc(var(--w) * 0.34); height: calc(var(--w) * 0.4); background: var(--c); color: var(--k); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); display: flex; justify-content: center; padding-top: calc(var(--w) * 0.03); font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.2); border-top-left-radius: calc(var(--w) * 0.09); }
+  /* rank dots: one tiny grey dot per card in the suit, a bigger gold dot at this card's position */
+  .pc .dots { position: absolute; left: calc(var(--w) * 0.115); top: calc(var(--w) * 0.47); height: calc(var(--w) * 0.62); width: calc(var(--w) * 0.1); display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: center; pointer-events: none; }
+  .pc .dots i { flex-shrink: 0; width: max(2.5px, calc(var(--w) * 0.04)); height: max(2.5px, calc(var(--w) * 0.04)); border-radius: 50%; background: rgba(225,232,240,0.55); box-shadow: 0 0 0 0.5px rgba(0,0,0,0.6); }
+  .pc .dots i.me { width: max(6px, calc(var(--w) * 0.1)); height: max(6px, calc(var(--w) * 0.1)); background: var(--gold); box-shadow: 0 0 0 1px #3a2606, 0 0 4px rgba(242,193,78,0.8); }
   .pc .nm { margin-top: auto; font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.13); letter-spacing: 0.5px; line-height: 1.1; white-space: nowrap; }
   .pc.cap { padding: 0; border: 3px solid #e9c46a; background: #0b1a2e; box-shadow: 0 0 0 1px #6b4e12, 0 5px 16px rgba(0,0,0,0.6), 0 0 14px rgba(242,193,78,0.35); }
   .pc.cap img { position: absolute; inset: 0; height: 100%; border-radius: 0; outline: 0; }
@@ -110,6 +114,21 @@
   .preview .k { font-size: 0.7rem; letter-spacing: 1.5px; opacity: 0.85; display: block; }
 
   .handwrap { position: relative; padding-top: 22px; }
+  /* gangplank: every number in the selected card's suit */
+  .gangarea { position: relative; height: 0; overflow: visible; transition: height 0.3s; }
+  .gangarea.open { height: 64px; }
+  .gang { position: absolute; left: 0; right: 0; top: 0; transition: transform 0.35s cubic-bezier(.2,1.2,.4,1), opacity 0.3s; }
+  .gang.out { transform: translateX(-110%) rotate(-3deg); opacity: 0; pointer-events: none; }
+  .plank { display: flex; border-radius: 5px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(40,20,5,0.7); background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 3px, rgba(40,20,5,0.18) 3px 4px, rgba(0,0,0,0) 4px 7px), linear-gradient(180deg, #a5713c, #7a4d24 60%, #5b3818); }
+  .plank b { position: relative; flex: 1; min-width: 0; text-align: center; padding: 8px 0 6px; font-family: Cinzel, serif; font-weight: 800; font-size: 0.95rem; color: #2b1606; text-shadow: 0 1px 0 rgba(255,214,160,0.5); border-right: 2px solid rgba(40,20,5,0.55); }
+  .plank b:last-child { border-right: 0; }
+  .plank b.cap::before { content: "★"; position: absolute; top: 0; left: 0; right: 0; font-size: 0.55rem; line-height: 1; color: #3a2606; }
+  .plank b.mine:not(.me) { color: #f5edda; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+  .plank b.me { color: #2a1d00; background: radial-gradient(circle, #fff1c8, #e0b04a 70%); text-shadow: none; }
+  .plank b.gone { color: rgba(43,22,6,0.6); background: rgba(20,10,2,0.22); }
+  .plank b.gone::after { content: ""; position: absolute; left: 18%; right: 18%; top: 52%; height: 2px; background: #8e2b1c; transform: rotate(-18deg); border-radius: 1px; box-shadow: 0 1px 0 rgba(255,214,160,0.35); }
+  .gangcap { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; font-weight: 800; color: var(--muted); margin-top: 5px; padding: 0 2px; }
+  .gangcap b { color: var(--gold); }
   .hand { position: relative; height: calc(var(--cw) * 1.43 + 26px); margin: 0 auto; }
   .hcard { position: absolute; bottom: 0; padding: 0; pointer-events: none; border: 0; background: none; transition: transform 0.22s cubic-bezier(.2,1.3,.4,1), filter 0.2s; transform-origin: 50% 100%; }
   .hcard.ill { filter: brightness(0.45) saturate(0.5); }
@@ -191,6 +210,7 @@
     </div>
     <div class="card-ui stack" id="hostBox">
       <label class="toggle"><input type="checkbox" id="optPreview" checked> Show the “if you play this” preview</label>
+      <label class="toggle"><input type="checkbox" id="optCross" checked> Cross out played cards on the gangplank</label>
       <button class="btn" id="startBtn">Set sail</button>
       <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.85rem" id="startHint"></div>
     </div>
@@ -214,6 +234,7 @@
     <div class="status" id="status"></div>
   </div>
   <div id="preview"></div>
+  <div class="gangarea" id="gangArea"><div class="gang out" id="gang"></div></div>
   <div class="handwrap">
     <div class="hand" id="hand"></div>
   </div>
@@ -260,7 +281,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 1;
+const APP_VERSION = 3;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -294,9 +315,13 @@ function legalCards(hand, trick, mustLead) {
   const match = hand.filter(c => suits.has(suitOf(c).k));
   return match.length ? match : hand.slice();
 }
+const ORD = k => k + (["th", "st", "nd", "rd"][(k % 100 - 20) % 10] || ["th", "st", "nd", "rd"][k % 100] || "th");
+// e.g. "6th of 8 in Glacier"; counted from the lowest card, so the Captain is always the top
+function rankText(n) { const s = suitOf(n); return isCaptain(n) ? `Captain of ${s.name}` : `${ORD(n - s.lo + 1)} of ${s.hi - s.lo + 1} in ${s.name}`; }
 function cardHTML(n, extra = "") {
   const s = suitOf(n), cap = isCaptain(n);
-  return `<div class="pc ${cap ? "cap" : ""} ${extra}" style="--c:${s.col};--k:${s.ink}"><img src="${s.img}" alt="" style="object-position:${s.pos}" draggable="false"><b class="num">${n}</b><span class="nm">${s.name}</span></div>`;
+  const dots = cap ? "" : `<span class="dots">${Array.from({ length: s.hi - s.lo + 1 }, (_, i) => `<i class="${i === n - s.lo ? "me" : ""}"></i>`).join("")}</span>`;
+  return `<div class="pc ${cap ? "cap" : ""} ${extra}" style="--c:${s.col};--k:${s.ink}"><img src="${s.img}" alt="" style="object-position:${s.pos}" draggable="false"><b class="num">${n}</b>${dots}<span class="nm">${s.name}</span></div>`;
 }
 const avatar = (p, size) => `<span class="av" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px;background:${p.color || "#8EC4F7"}">${esc((p.name || "?").slice(0, 2).toUpperCase())}</span>`;
 
@@ -333,7 +358,7 @@ $("createBtn").onclick = async () => {
     const c = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
     const ex = await db.ref(`rooms/${c}/pub/hostUid`).once("value");
     if (ex.exists()) continue;
-    await db.ref(`rooms/${c}/pub`).set({ hostUid: uid, ver: APP_VERSION, created: TS, settings: { preview: true }, state: { phase: "lobby", seq: 0 }, players: { [uid]: { name, color: selColor, joinedAt: TS, online: true } } });
+    await db.ref(`rooms/${c}/pub`).set({ hostUid: uid, ver: APP_VERSION, created: TS, settings: { preview: true, cross: true }, state: { phase: "lobby", seq: 0 }, players: { [uid]: { name, color: selColor, joinedAt: TS, online: true } } });
     $("createBtn").disabled = false;
     return enterRoom(c);
   }
@@ -389,6 +414,8 @@ const order = () => (room.state && room.state.order) || Object.keys(players()).s
 const nameOf = id => (players()[id] || {}).name || "?";
 const nextSeat = id => { const o = order(); return o[(o.indexOf(id) + 1) % o.length]; };
 const trickOf = s => (s.trick || []).filter(Boolean);
+// every card played this round, including the current trick (Firebase may hand arrays back as objects)
+const playedOf = s => (Array.isArray(s.played) ? s.played : Object.values(s.played || {})).filter(v => v != null);
 const scores = () => room.scores || {};
 
 // ---------- HOST: runs the rules ----------
@@ -416,10 +443,10 @@ function brainTick() {
 }
 function applyPlay(s, p, card) {
   if (room.state.seq !== s.seq) return;
-  const trick = trickOf(s).concat([{ p, c: card }]);
-  if (trick.length < order().length) return setState({ trick, turn: nextSeat(p), seq: s.seq + 1, first: null });
+  const trick = trickOf(s).concat([{ p, c: card }]), played = playedOf(s).concat([card]);
+  if (trick.length < order().length) return setState({ trick, played, turn: nextSeat(p), seq: s.seq + 1, first: null });
   const res = resolve(trick);
-  setState({ phase: "trickEnd", trick, turn: null, seq: s.seq + 1, first: null, res, at: TS });
+  setState({ phase: "trickEnd", trick, played, turn: null, seq: s.seq + 1, first: null, res, at: TS });
 }
 function afterTrick(seq) {
   const s = room.state; if (s.seq !== seq || s.phase !== "trickEnd") return;
@@ -446,7 +473,7 @@ async function deal() {
   const upd = {}; let leader = o[0];
   o.forEach((id, i) => { const h = deck.slice(i * per, (i + 1) * per).sort((a, b) => a - b); if (h.includes(fc)) leader = id; upd[`rooms/${code}/hands/${id}`] = h; });
   await db.ref().update(upd);
-  setState({ phase: "play", order: o, round: (s.round || 0) + 1, trickNo: 1, perHand: per, sinkAt: sinkAt(n), turn: leader, leader, first: fc, trick: null, taken: null, res: null, seq: (s.seq || 0) + 1, at: TS });
+  setState({ phase: "play", order: o, round: (s.round || 0) + 1, trickNo: 1, perHand: per, sinkAt: sinkAt(n), turn: leader, leader, first: fc, trick: null, played: null, taken: null, res: null, seq: (s.seq || 0) + 1, at: TS });
 }
 async function autoPlay(seq) {
   const s = room.state; if (s.seq !== seq || s.phase !== "play") return;
@@ -460,7 +487,7 @@ async function autoPlay(seq) {
 $("startBtn").onclick = async () => {
   const n = Object.keys(players()).length; if (n < MIN_P || n > MAX_P) return;
   $("startBtn").disabled = true;
-  await roomRef.update({ scores: null, log: null, moves: null, settings: { preview: $("optPreview").checked }, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, order: Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0)), round: 0 } });
+  await roomRef.update({ scores: null, log: null, moves: null, settings: { preview: $("optPreview").checked, cross: $("optCross").checked }, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, order: Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0)), round: 0 } });
   await deal();
   $("startBtn").disabled = false;
 };
@@ -469,15 +496,16 @@ function backToLobby() { if (!isHost) return; closeSheet(); roomRef.update({ sco
 
 // ---------- PLAYER actions ----------
 let selCard = null;
+function canPlay(card) { const s = room.state; return s.phase === "play" && s.turn === uid && legalCards(myHand, trickOf(s), s.first).includes(card); }
 function pick(card) {
-  const s = room.state; if (s.phase !== "play" || s.turn !== uid) return;
-  if (!legalCards(myHand, trickOf(s), s.first).includes(card)) { toast(trickOf(s).length ? "You must match a suit already in the trick" : "You must lead with the " + s.first); return; }
-  if (selCard === card) return playSelected();
-  selCard = card; renderHand(); renderPreview();
+  // any card can be selected to check it on the gangplank; tapping a selected card again plays it if allowed, otherwise deselects
+  if (selCard === card) { if (canPlay(card)) return playSelected(); selCard = null; }
+  else selCard = card;
+  renderHand(); renderPreview(); renderGang();
 }
 async function playSelected() {
-  const s = room.state; if (selCard == null || s.phase !== "play" || s.turn !== uid) return;
-  const card = selCard; selCard = null;
+  const s = room.state; if (selCard == null || !canPlay(selCard)) return;
+  const card = selCard; selCard = null; renderGang();
   const el = document.querySelector(`.hcard[data-c="${card}"]`); if (el) el.classList.add("playing");
   if (navigator.vibrate) navigator.vibrate(25);
   await db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, card });
@@ -502,7 +530,7 @@ function render() {
   const s = room.state;
   if (s.phase === "lobby") { show("vLobby"); closeSheet(); return renderLobby(); }
   show("vGame");
-  renderTop(s); renderSeats(s); renderTable(s); renderHand(); renderPreview();
+  renderTop(s); renderSeats(s); renderTable(s); renderHand(); renderPreview(); renderGang();
   if (s.phase === "captain") { if (s.res.winner === uid) openCaptain(s); else closeSheet("cap"); }
   else if (s.phase === "roundEnd" || s.phase === "gameOver") openScores(s, true);
   else if (lastPhase === "roundEnd" || lastPhase === "gameOver" || lastPhase === "captain") closeSheet();
@@ -591,22 +619,33 @@ function renderTable(s) {
 function renderHand() {
   const s = room.state, h = $("hand"), myTurn = s.phase === "play" && s.turn === uid;
   const legal = myTurn ? legalCards(myHand, trickOf(s), s.first) : [];
-  if (selCard != null && (!myTurn || !legal.includes(selCard))) selCard = null;
+  if (selCard != null && !myHand.includes(selCard)) selCard = null;
   const n = myHand.length, W = (h.parentElement.clientWidth || 360) - 12, cw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cw")) || 62;
   const step = n > 1 ? Math.min(cw * 0.92, (W - cw - 8) / (n - 1)) : 0, total = step * (n - 1) + cw;
   h.style.width = total + "px"; h.dataset.step = step; h.dataset.cw = cw;
   h.innerHTML = myHand.map((c, i) => {
     const off = i - (n - 1) / 2, rot = n > 1 ? off * Math.min(2, 16 / n) : 0;
-    const cls = !myTurn ? "" : c === selCard ? "sel" : legal.includes(c) ? "ok" : "ill";
+    const cls = c === selCard ? "sel" : !myTurn ? "" : legal.includes(c) ? "ok" : "ill";
     return `<button class="hcard ${cls}" data-c="${c}" style="left:${i * step}px;rotate:${rot}deg;z-index:${i + 1}" aria-label="${suitOf(c).name} ${c}${myTurn && !legal.includes(c) ? ", can't be played now" : ""}">${cardHTML(c)}</button>`;
   }).join("");
   const pb = $("playBtn");
-  pb.disabled = !(myTurn && selCard != null);
-  pb.textContent = !myTurn ? (s.phase === "play" ? `${nameOf(s.turn)}'s turn` : "…") : selCard == null ? "Tap a card" : `Play ${suitOf(selCard).name} ${selCard}`;
+  const ok = selCard != null && canPlay(selCard);
+  pb.disabled = !ok;
+  pb.textContent = !myTurn ? (s.phase === "play" ? `${nameOf(s.turn)}'s turn` : "…") : selCard == null ? "Tap a card" : ok ? `Play the ${selCard}` : (trickOf(s).length ? "Can't play this: match the table" : `Can't play this: lead with the ${s.first}`);
+}
+function renderGang() {
+  const g = $("gang"), area = $("gangArea"), s = room.state;
+  if (selCard == null || !myHand.includes(selCard) || s.phase === "lobby") { g.classList.add("out"); area.classList.remove("open"); return; }
+  const su = suitOf(selCard), cross = !room.settings || room.settings.cross !== false, played = new Set(cross ? playedOf(s) : []);
+  const nums = Array.from({ length: su.hi - su.lo + 1 }, (_, i) => su.lo + i);
+  const higher = nums.filter(x => x > selCard && !myHand.includes(x) && !played.has(x)).length;
+  g.innerHTML = `<div class="plank">${nums.map(x => `<b class="${x === selCard ? "me" : ""} ${myHand.includes(x) ? "mine" : ""} ${isCaptain(x) ? "cap" : ""} ${played.has(x) ? "gone" : ""}">${x}</b>`).join("")}</div>
+    <div class="gangcap"><span>${su.name} · ${isCaptain(selCard) ? "Captain" : ORD(selCard - su.lo + 1) + " of " + nums.length}</span><span>${higher ? `<b>${higher}</b>&nbsp;higher ${cross ? "still out there" : "not in your hand"}` : `<b>Nothing higher</b>&nbsp;${cross ? "still out there" : "outside your hand"}`}</span></div>`;
+  g.classList.remove("out"); area.classList.add("open");
 }
 function renderPreview() {
   const s = room.state, el = $("preview");
-  if (!room.settings || !room.settings.preview || s.phase !== "play" || s.turn !== uid || selCard == null) { el.innerHTML = ""; return; }
+  if (!room.settings || !room.settings.preview || selCard == null || !canPlay(selCard)) { el.innerHTML = ""; return; }
   const trick = trickOf(s).concat([{ p: uid, c: selCard }]), r = resolve(trick), left = order().length - trick.length;
   const mine = r.winner === uid;
   const who = mine ? "You would take this trick" : `${nameOf(r.winner)}'s ${r.card} would take it`;
