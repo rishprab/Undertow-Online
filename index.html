@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Undertow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sea0: #050c18; --sea1: #0b1a2e; --sea2: #13304f; --ink: #eaf1f8; --muted: #a9bdd2; --gold: #f2c14e; --gold2: #c99a2e;
+    --panel: rgba(255,255,255,0.06); --line: rgba(255,255,255,0.12); --red: #ff8a7a; --green: #6fd39a;
+    --cw: 62px; /* hand card width */
+    --tw: 58px; /* table card width */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { overflow-x: hidden; background: radial-gradient(ellipse at 50% 30%, #17375a 0%, var(--sea1) 55%, var(--sea0) 100%) fixed; color: var(--ink); font-family: 'Nunito Sans', system-ui, sans-serif; overflow-x: hidden; }
+  button { font-family: inherit; cursor: pointer; }
+  .hidden { display: none !important; }
+  .view { min-height: 100vh; min-height: 100dvh; }
+  .fred { font-family: Cinzel, serif; }
+  h1.logo { font-family: Cinzel, serif; font-weight: 800; letter-spacing: 6px; color: var(--gold); margin: 0; font-size: 2.6rem; text-align: center; }
+  .tag { text-align: center; color: var(--muted); font-weight: 600; margin: 6px 0 22px; }
+  .wrap { max-width: 460px; margin: 0 auto; padding: 28px 18px 40px; }
+  .card-ui { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+  label.lbl { display: block; font-size: 0.78rem; font-weight: 800; letter-spacing: 1.5px; color: var(--muted); margin: 0 0 6px; text-transform: uppercase; }
+  input.text { width: 100%; font-size: 1.05rem; padding: 13px 14px; border-radius: 12px; border: 2px solid var(--line); background: rgba(0,0,0,0.25); color: var(--ink); font-family: inherit; font-weight: 700; outline: none; }
+  input.text:focus { border-color: var(--gold); }
+  .btn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 15px; font-size: 1.05rem; font-weight: 800; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1d00; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+  .btn.small { display: inline-block; width: auto; padding: 9px 14px; font-size: 0.9rem; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .err { color: var(--red); font-weight: 700; min-height: 1.2em; text-align: center; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; }
+  .sw.sel { border-color: #fff; box-shadow: 0 0 0 2px var(--gold); }
+  .av { border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; color: #0b1a2e; flex: 0 0 auto; border: 2px solid rgba(255,255,255,0.85); }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 140%); visibility: hidden; background: #0b1a2e; border: 1px solid var(--gold2); color: var(--ink); padding: 10px 16px; border-radius: 12px; font-weight: 700; z-index: 100; transition: transform 0.3s; max-width: 90vw; text-align: center; }
+  #toast.show { transform: translate(-50%, 0); visibility: visible; }
+
+  /* ---------- lobby ---------- */
+  .code { font-family: Cinzel, serif; font-size: 3rem; font-weight: 800; letter-spacing: 8px; color: var(--gold); text-align: center; }
+  .qr { background: #fff; padding: 8px; border-radius: 12px; width: 152px; height: 152px; margin: 0 auto; }
+  .plist { display: flex; flex-direction: column; gap: 8px; }
+  .prow { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 8px 10px; font-weight: 800; }
+  .prow .host { margin-left: auto; font-size: 0.72rem; letter-spacing: 1.5px; color: var(--gold); }
+  .toggle { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .toggle input { width: 22px; height: 22px; accent-color: var(--gold); }
+
+  /* ---------- cards ---------- */
+  .pc { --w: var(--cw); position: relative; width: var(--w); height: calc(var(--w) * 1.43); border-radius: calc(var(--w) * 0.1); padding: calc(var(--w) * 0.05); background: linear-gradient(170deg, #f5eddc, #e2d3b4); box-shadow: 0 5px 14px rgba(0,0,0,0.55); display: flex; flex-direction: column; align-items: center; color: #2b2116; flex: 0 0 auto; overflow: hidden; }
+  .pc img { display: block; width: 100%; height: 76%; object-fit: cover; border-radius: calc(var(--w) * 0.06); outline: 2px solid var(--c); outline-offset: -2px; }
+  .pc .num { position: absolute; left: 1px; top: 1px; width: calc(var(--w) * 0.34); height: calc(var(--w) * 0.4); background: var(--c); color: var(--k); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); display: flex; justify-content: center; padding-top: calc(var(--w) * 0.03); font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.2); border-top-left-radius: calc(var(--w) * 0.09); }
+  .pc .nm { margin-top: auto; font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.13); letter-spacing: 0.5px; line-height: 1.1; white-space: nowrap; }
+  .pc.cap { padding: 0; border: 3px solid #e9c46a; background: #0b1a2e; box-shadow: 0 0 0 1px #6b4e12, 0 5px 16px rgba(0,0,0,0.6), 0 0 14px rgba(242,193,78,0.35); }
+  .pc.cap img { position: absolute; inset: 0; height: 100%; border-radius: 0; outline: 0; }
+  .pc.cap .num { left: 4px; top: 4px; width: calc(var(--w) * 0.36); height: calc(var(--w) * 0.36); border-radius: 50%; clip-path: none; background: radial-gradient(circle at 35% 30%, #fbe3a0, #c99a2e 70%, #8a6414); color: #2a1d00; border: 2px solid #fff1c8; align-items: center; padding: 0; font-size: calc(var(--w) * 0.17); }
+  .pc.cap .nm { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; color: #fff6e2; padding: calc(var(--w) * 0.18) 2px calc(var(--w) * 0.05); background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75) 55%); }
+  .pc.cap .nm::after { content: "CAPTAIN"; display: block; margin: 2px auto 0; width: fit-content; font-family: 'Nunito Sans', sans-serif; font-size: calc(var(--w) * 0.09); letter-spacing: 1.5px; color: #2a1d00; background: #e9c46a; border-radius: 4px; padding: 0 4px; }
+  .back { --w: 14px; width: var(--w); height: calc(var(--w) * 1.4); border-radius: 3px; background: radial-gradient(circle at 50% 45%, #1d4670, #0d2440 70%); border: 1px solid var(--gold2); display: inline-block; }
+
+  /* ---------- game ---------- */
+  #vGame { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; padding: 8px 10px 12px; min-height: 100dvh; }
+  .topbar { display: flex; align-items: center; gap: 8px; padding: 4px 2px 8px; }
+  .topbar .t1 { font-family: Cinzel, serif; font-weight: 800; color: var(--gold); letter-spacing: 2px; }
+  .topbar .t2 { color: var(--muted); font-weight: 700; font-size: 0.85rem; }
+  .topbar .sp { flex: 1; }
+  .pill { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 5px 11px; font-weight: 800; font-size: 0.82rem; color: var(--ink); }
+  .opps { display: flex; justify-content: space-around; gap: 6px; flex-wrap: wrap; padding: 2px 0 6px; }
+  .opp { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 64px; position: relative; padding: 6px 4px; border-radius: 14px; transition: background 0.3s; }
+  .opp.turn { background: rgba(127,211,255,0.12); }
+  .opp .avwrap { position: relative; }
+  .opp.turn .av { box-shadow: 0 0 0 3px #7fd3ff, 0 0 18px rgba(127,211,255,0.8); }
+  .opp .nm { font-weight: 800; font-size: 0.85rem; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .opp .meta { font-size: 0.72rem; color: var(--muted); font-weight: 700; display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+  .opp .off { position: absolute; top: -4px; right: -8px; font-size: 0.6rem; background: #7a2a2a; color: #fff; border-radius: 6px; padding: 1px 4px; font-weight: 800; }
+  .opp .crown { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
+
+  .table { position: relative; flex: 1; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border-radius: 50% / 34%; background: radial-gradient(ellipse, rgba(242,193,78,0.07), rgba(0,0,0,0) 70%); border: 1px solid rgba(242,193,78,0.16); margin: 4px 0; padding: 14px 8px; }
+  .trick { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--tw) * 1.43 + 20px); align-items: flex-start; }
+  .tslot { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
+  .tslot .pc { --w: var(--tw); }
+  .tslot .who { font-size: 0.72rem; font-weight: 800; color: var(--muted); max-width: calc(var(--tw) + 10px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tslot.win .pc { box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(242,193,78,0.85); transform: translateY(-6px); }
+  .tslot.win::before { content: "WINNING"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.58rem; font-weight: 800; letter-spacing: 1.2px; border-radius: 6px; padding: 1px 5px; z-index: 2; }
+  .tslot .pc { transition: transform 0.3s, box-shadow 0.3s; }
+  .tslot.fly .pc { animation: fly 0.5s cubic-bezier(.2,1.25,.4,1) both; }
+  @keyframes fly { from { opacity: 0; transform: translate(var(--fx, 0), var(--fy, -60px)) rotate(var(--fr, -14deg)) scale(0.6); } to { opacity: 1; transform: none; } }
+  .trick.sweep .tslot { transition: transform 0.75s cubic-bezier(.5,0,.75,0), opacity 0.75s; transform: translate(var(--sx, 0), var(--sy, -200px)) scale(0.15) rotate(300deg); opacity: 0; }
+  .trick .empty { color: var(--muted); font-weight: 700; padding: 30px 0; text-align: center; }
+  .bars { display: flex; flex-direction: column; gap: 4px; min-height: 18px; }
+  .bar { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 800; }
+  .bar .lab { width: 78px; text-align: right; }
+  .bar .segs { display: flex; gap: 3px; }
+  .bar .seg { width: 22px; height: 12px; border-radius: 3px; animation: grow 0.35s ease-out both; }
+  @keyframes grow { from { transform: scaleY(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
+  .status { text-align: center; font-weight: 800; font-size: 1rem; min-height: 1.4em; }
+  .status.mine { color: var(--gold); }
+  .banner { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); background: rgba(9,24,42,0.94); border: 2px solid var(--gold); border-radius: 16px; padding: 12px 16px; text-align: center; font-weight: 800; z-index: 5; width: min(92%, 420px); animation: pop 0.35s cubic-bezier(.2,1.4,.4,1) both; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .banner .cap { display: inline-block; margin-top: 6px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1d00; border-radius: 10px; padding: 4px 10px; }
+  @keyframes pop { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); } to { opacity: 1; transform: translateX(-50%); } }
+
+  .preview { border-radius: 14px; padding: 9px 12px; font-size: 0.9rem; font-weight: 700; line-height: 1.35; margin: 2px 0 6px; border: 2px solid; min-height: 0; }
+  .preview.safe { background: rgba(47,140,85,0.2); border-color: var(--green); }
+  .preview.risk { background: rgba(217,71,63,0.2); border-color: var(--red); }
+  .preview .k { font-size: 0.7rem; letter-spacing: 1.5px; opacity: 0.85; display: block; }
+
+  .handwrap { position: relative; padding-top: 22px; }
+  .hand { position: relative; height: calc(var(--cw) * 1.43 + 26px); margin: 0 auto; }
+  .hcard { position: absolute; bottom: 0; padding: 0; pointer-events: none; border: 0; background: none; transition: transform 0.22s cubic-bezier(.2,1.3,.4,1), filter 0.2s; transform-origin: 50% 100%; }
+  .hcard.ill { filter: brightness(0.45) saturate(0.5); }
+  .hcard.ok { transform: translateY(-8px); }
+  .hcard.sel { transform: translateY(-24px) scale(1.12); z-index: 50; }
+  .hcard.sel .pc { box-shadow: 0 0 0 3px var(--gold), 0 0 20px rgba(242,193,78,0.8); }
+  .hcard.playing { transform: translateY(-120px) scale(0.8); opacity: 0; transition: transform 0.35s ease-in, opacity 0.35s; }
+  .playbar { display: flex; gap: 8px; margin-top: 8px; }
+  .playbar .btn { padding: 13px; flex: 1; min-width: 0; }
+  #meSeat { flex: 0 0 auto; }
+
+  /* ---------- sheets ---------- */
+  .sheet { position: fixed; inset: 0; z-index: 60; background: rgba(4,10,20,0.82); display: flex; align-items: center; justify-content: center; padding: 16px; animation: fade 0.25s both; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  .sheet .box { width: min(100%, 460px); max-height: 92vh; overflow-y: auto; background: linear-gradient(180deg, #13304f, #0b1a2e); border: 1px solid var(--gold2); border-radius: 20px; padding: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .sheet h2 { font-family: Cinzel, serif; color: var(--gold); margin: 0 0 4px; text-align: center; }
+  .sheet .sub { text-align: center; color: var(--muted); font-weight: 700; margin-bottom: 14px; }
+  .pickbtn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--line); background: rgba(255,255,255,0.05); color: var(--ink); font-weight: 800; font-size: 1rem; margin-bottom: 8px; text-align: left; }
+  .pickbtn:hover { border-color: var(--gold); }
+  .pickbtn .meta { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
+  .srow { display: grid; grid-template-columns: 28px 34px 1fr auto 44px; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); font-weight: 800; }
+  .srow .place { font-family: Cinzel, serif; color: var(--gold); }
+  .srow .d { color: var(--red); font-size: 0.85rem; }
+  .srow .tot { font-family: Cinzel, serif; font-size: 1.2rem; text-align: right; }
+  .sink { grid-column: 3 / 6; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: -4px; }
+  .sink div { height: 100%; background: linear-gradient(90deg, #6fd39a, #f2c14e, #ff8a7a); border-radius: 3px; transition: width 1s ease-out; }
+  .leader { background: rgba(242,193,78,0.12); border-radius: 10px; }
+  .confetti { position: fixed; top: -10px; width: 8px; height: 14px; z-index: 80; pointer-events: none; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  @media (min-width: 700px) {
+    :root { --cw: 84px; --tw: 84px; }
+    .opp .nm { font-size: 0.95rem; }
+  }
+  @media (max-width: 360px) { :root { --cw: 56px; --tw: 50px; } }
+</style>
+</head>
+<body>
+
+<!-- ============ HOME ============ -->
+<div class="view" id="vHome">
+  <div class="wrap">
+    <h1 class="logo">UNDERTOW</h1>
+    <div class="tag">A trick-dodging card game for 3–6 sailors</div>
+    <div class="card-ui stack">
+      <div id="rejoinBox" class="hidden"></div>
+      <div>
+        <label class="lbl" for="nameIn">Your name</label>
+        <input class="text" id="nameIn" maxlength="14" placeholder="e.g. Risheek" autocomplete="off">
+      </div>
+      <div>
+        <span class="lbl">Your colour</span>
+        <div class="swatches" id="swatches"></div>
+      </div>
+      <button class="btn" id="createBtn">Create a game</button>
+      <div class="row">
+        <input class="text" id="codeIn" maxlength="4" placeholder="CODE" style="text-transform: uppercase; letter-spacing: 4px; text-align: center; font-family: Cinzel, serif" autocomplete="off" aria-label="Room code">
+        <button class="btn ghost" id="joinBtn" style="width: 46%">Join</button>
+      </div>
+      <div class="err" id="homeErr"></div>
+    </div>
+    <p style="text-align: center; margin-top: 18px"><a href="undertow-help.html" target="_blank" rel="noopener" style="color: var(--gold); font-weight: 800; text-decoration: none">How to play</a></p>
+  </div>
+</div>
+
+<!-- ============ LOBBY ============ -->
+<div class="view hidden" id="vLobby">
+  <div class="wrap stack">
+    <h1 class="logo" style="font-size: 1.8rem">UNDERTOW</h1>
+    <div class="card-ui stack" style="align-items: center">
+      <span class="lbl" style="margin: 0">Room code</span>
+      <div class="code" id="lobbyCode">----</div>
+      <div class="qr" id="qr"></div>
+      <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.9rem">Scan, or open the game and enter the code</div>
+    </div>
+    <div class="card-ui stack">
+      <span class="lbl" style="margin: 0" id="lobbyCount">Sailors</span>
+      <div class="plist" id="lobbyList"></div>
+    </div>
+    <div class="card-ui stack" id="hostBox">
+      <label class="toggle"><input type="checkbox" id="optPreview" checked> Show the “if you play this” preview</label>
+      <button class="btn" id="startBtn">Set sail</button>
+      <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.85rem" id="startHint"></div>
+    </div>
+    <div class="card-ui" id="guestBox" style="text-align: center; font-weight: 800; color: var(--muted)">Waiting for the host to set sail…</div>
+    <button class="btn ghost" id="leaveBtn">Leave</button>
+  </div>
+</div>
+
+<!-- ============ GAME ============ -->
+<div class="view hidden" id="vGame">
+  <div class="topbar">
+    <span class="t1">UNDERTOW</span>
+    <span class="t2" id="gRound"></span>
+    <span class="sp"></span>
+    <button class="pill" id="scoresBtn">Scores</button>
+  </div>
+  <div class="opps" id="opps"></div>
+  <div class="table" id="table">
+    <div class="trick" id="trick"></div>
+    <div class="bars" id="bars"></div>
+    <div class="status" id="status"></div>
+  </div>
+  <div id="preview"></div>
+  <div class="handwrap">
+    <div class="hand" id="hand"></div>
+  </div>
+  <div class="playbar" id="playbar">
+    <div class="opp" id="meSeat" style="flex-direction: row; gap: 8px; padding: 4px 8px"></div>
+    <button class="btn" id="playBtn" disabled>Choose a card</button>
+  </div>
+</div>
+
+<div id="sheetHost"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ====== PASTE YOUR FIREBASE CONFIG HERE ======
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+// ==============================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const TS = firebase.database.ServerValue.TIMESTAMP;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function load(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+let toastT = null;
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("show"); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600); }
+let clockOffset = 0;
+db.ref(".info/serverTimeOffset").on("value", s => { clockOffset = s.val() || 0; });
+const serverNow = () => Date.now() + clockOffset;
+
+// ---------- the deck ----------
+// bump when uploading a new version; devices with an older cached copy are asked to refresh
+const APP_VERSION = 1;
+const SUITS = [
+  { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
+  { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
+  { k: "mist", name: "Mist", lo: 21, hi: 29, col: "#9AA7B5", ink: "#14202E", img: "cards/mist.jpg", pos: "50% 52%" },
+  { k: "glacier", name: "Glacier", lo: 31, hi: 38, col: "#3D86CF", ink: "#FFFFFF", img: "cards/glacier.jpg", pos: "50% 35%" },
+  { k: "shoals", name: "Shoals", lo: 41, hi: 47, col: "#2F8C55", ink: "#FFFFFF", img: "cards/shoals.jpg", pos: "50% 45%" },
+  { k: "tempest", name: "Tempest", lo: 51, hi: 56, col: "#7A55C9", ink: "#FFFFFF", img: "cards/tempest.jpg", pos: "50% 45%" },
+  { k: "mael", name: "Maelstrom", lo: 61, hi: 65, col: "#22B3AA", ink: "#06201E", img: "cards/maelstrom.jpg", pos: "50% 48%" },
+  { k: "levi", name: "Leviathan", lo: 71, hi: 74, col: "#8E2443", ink: "#FFFFFF", img: "cards/leviathan.jpg", pos: "50% 62%" }
+];
+const suitOf = n => SUITS.find(s => n >= s.lo && n <= s.hi);
+const isCaptain = n => suitOf(n).hi === n;
+const COLORS = ["#FFB3A8", "#F0A24A", "#F2D16B", "#9FD08C", "#7FE0D8", "#8EC4F7", "#C3A6F5", "#F5A6D0"];
+const TRICK_MS = 2600, AUTO_MS = 20000, MIN_P = 3, MAX_P = 6;
+const deckFor = n => { const d = []; SUITS.forEach(s => { if (n === 3 && (s.k === "drift" || s.k === "levi")) return; for (let v = s.lo; v <= s.hi; v++) d.push(v); }); return d; };
+const sinkAt = n => n <= 4 ? 15 : n === 5 ? 12 : 10;
+const firstCard = n => n === 3 ? 11 : 0;
+
+// who takes a trick: the suit with most cards wins; ties go to whichever tied suit holds the highest card
+function resolve(trick) {
+  const counts = {};
+  trick.forEach(t => { const k = suitOf(t.c).k; counts[k] = (counts[k] || 0) + 1; });
+  const most = Math.max(...Object.values(counts));
+  const tied = Object.keys(counts).filter(k => counts[k] === most);
+  let best = null; trick.forEach(t => { if (tied.includes(suitOf(t.c).k) && (!best || t.c > best.c)) best = t; });
+  return { winner: best.p, card: best.c, counts, most, tied, cap: isCaptain(best.c) };
+}
+function legalCards(hand, trick, mustLead) {
+  if (!trick.length) return mustLead != null && hand.includes(mustLead) ? [mustLead] : hand.slice();
+  const suits = new Set(trick.map(t => suitOf(t.c).k));
+  const match = hand.filter(c => suits.has(suitOf(c).k));
+  return match.length ? match : hand.slice();
+}
+function cardHTML(n, extra = "") {
+  const s = suitOf(n), cap = isCaptain(n);
+  return `<div class="pc ${cap ? "cap" : ""} ${extra}" style="--c:${s.col};--k:${s.ink}"><img src="${s.img}" alt="" style="object-position:${s.pos}" draggable="false"><b class="num">${n}</b><span class="nm">${s.name}</span></div>`;
+}
+const avatar = (p, size) => `<span class="av" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px;background:${p.color || "#8EC4F7"}">${esc((p.name || "?").slice(0, 2).toUpperCase())}</span>`;
+
+// ---------- session ----------
+let uid = null, code = null, room = null, roomRef = null, isHost = false, myHand = [], handRef = null;
+let selColor = load("undertow.color") || COLORS[Math.floor(Math.random() * COLORS.length)];
+const qs = new URLSearchParams(location.search);
+$("nameIn").value = load("undertow.name") || "";
+if (qs.get("room")) $("codeIn").value = qs.get("room").toUpperCase();
+function drawSwatches() { $("swatches").innerHTML = COLORS.map(c => `<button class="sw ${c === selColor ? "sel" : ""}" style="background:${c}" aria-label="Colour ${c}" onclick="pickColor('${c}')"></button>`).join(""); }
+function pickColor(c) { selColor = c; store("undertow.color", c); drawSwatches(); }
+drawSwatches();
+function show(v) { ["vHome", "vLobby", "vGame"].forEach(id => $(id).classList.toggle("hidden", id !== v)); }
+function myName() { const n = $("nameIn").value.trim(); if (!n) { $("homeErr").textContent = "Pop your name in first"; return null; } store("undertow.name", n); return n; }
+
+auth.onAuthStateChanged(u => { if (u) { uid = u.uid; checkRejoin(); } });
+auth.signInAnonymously().catch(e => { $("homeErr").textContent = "Connection error: " + e.message; });
+
+function checkRejoin() {
+  const last = load("undertow.last");
+  if (!last || !last.code) return;
+  if (qs.get("room") && qs.get("room").toUpperCase() === last.code) return enterRoom(last.code);
+  db.ref(`rooms/${last.code}/pub/players/${uid}`).once("value").then(s => {
+    if (!s.exists()) return;
+    $("rejoinBox").classList.remove("hidden");
+    $("rejoinBox").innerHTML = `<div class="row" style="background:rgba(242,193,78,0.12);border-radius:12px;padding:10px"><div style="flex:1;font-weight:700">You were in game <b>${esc(last.code)}</b></div><button class="btn small" onclick="enterRoom('${esc(last.code)}')">Rejoin</button></div>`;
+  });
+}
+$("createBtn").onclick = async () => {
+  const name = myName(); if (!name || !uid) return;
+  $("createBtn").disabled = true;
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  for (let tries = 0; tries < 8; tries++) {
+    const c = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
+    const ex = await db.ref(`rooms/${c}/pub/hostUid`).once("value");
+    if (ex.exists()) continue;
+    await db.ref(`rooms/${c}/pub`).set({ hostUid: uid, ver: APP_VERSION, created: TS, settings: { preview: true }, state: { phase: "lobby", seq: 0 }, players: { [uid]: { name, color: selColor, joinedAt: TS, online: true } } });
+    $("createBtn").disabled = false;
+    return enterRoom(c);
+  }
+  $("createBtn").disabled = false; $("homeErr").textContent = "Couldn't create a room, try again";
+};
+$("joinBtn").onclick = async () => {
+  const name = myName(); if (!name || !uid) return;
+  const c = $("codeIn").value.trim().toUpperCase();
+  if (c.length !== 4) { $("homeErr").textContent = "Room codes are 4 letters"; return; }
+  const s = await db.ref(`rooms/${c}/pub`).once("value");
+  if (!s.exists()) { $("homeErr").textContent = "No game with that code"; return; }
+  const pub = s.val(), me = (pub.players || {})[uid];
+  if (!me && pub.state && pub.state.phase !== "lobby") { $("homeErr").textContent = "That game has already set sail"; return; }
+  if (!me && Object.keys(pub.players || {}).length >= MAX_P) { $("homeErr").textContent = "That game is full (6 sailors)"; return; }
+  await db.ref(`rooms/${c}/pub/players/${uid}`).update({ name, color: selColor, joinedAt: me ? me.joinedAt : TS, online: true });
+  enterRoom(c);
+};
+
+function enterRoom(c) {
+  code = c; store("undertow.last", { code: c });
+  history.replaceState(null, "", location.pathname + "?room=" + c);
+  roomRef = db.ref(`rooms/${c}/pub`);
+  const meRef = db.ref(`rooms/${c}/pub/players/${uid}/online`);
+  db.ref(".info/connected").on("value", s => { if (s.val()) { meRef.onDisconnect().set(false); meRef.set(true); } });
+  roomRef.on("value", s => {
+    room = s.val();
+    if (!room) { toast("That game has ended"); return leaveRoom(true); }
+    if (!(room.players || {})[uid]) { toast("You're not in this game"); return leaveRoom(true); }
+    isHost = room.hostUid === uid;
+    if ((room.ver || 0) > APP_VERSION) return needUpdate();
+    render(); brainTick();
+  });
+  handRef = db.ref(`rooms/${c}/hands/${uid}`);
+  handRef.on("value", s => { myHand = (s.val() || []).filter(v => v != null).sort((a, b) => a - b); if (room) render(); });
+}
+function leaveRoom(silent) {
+  if (roomRef) roomRef.off(); if (handRef) handRef.off();
+  if (!silent && room && room.state && room.state.phase === "lobby" && code) db.ref(`rooms/${code}/pub/players/${uid}`).remove();
+  store("undertow.last", null); room = null; code = null;
+  history.replaceState(null, "", location.pathname); show("vHome");
+}
+$("leaveBtn").onclick = () => leaveRoom(false);
+function needUpdate() {
+  if ($("updBox")) return;
+  const d = document.createElement("div"); d.id = "updBox"; d.className = "sheet";
+  d.innerHTML = `<div class="box" style="text-align:center"><h2>Undertow has been updated</h2><div class="sub">This device has an older saved copy. Update to keep playing. You'll stay in the game.</div><button class="btn" onclick="location.href=location.pathname+'?room='+code+'&v='+Date.now()">Update now</button></div>`;
+  document.body.appendChild(d);
+}
+
+// ---------- helpers on the room ----------
+const players = () => room.players || {};
+const order = () => (room.state && room.state.order) || Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0));
+const nameOf = id => (players()[id] || {}).name || "?";
+const nextSeat = id => { const o = order(); return o[(o.indexOf(id) + 1) % o.length]; };
+const trickOf = s => (s.trick || []).filter(Boolean);
+const scores = () => room.scores || {};
+
+// ---------- HOST: runs the rules ----------
+let brainT = null, brainKey = null;
+function setState(patch) { return roomRef.child("state").update(patch); }
+function brainTick() {
+  if (!isHost || !room || !room.state) return;
+  const s = room.state, key = s.phase + ":" + s.seq;
+  if (key !== brainKey) { clearTimeout(brainT); brainKey = key; }
+  if (s.phase === "play") {
+    const mv = (room.moves || {})[s.turn];
+    if (mv && mv.seq === s.seq && mv.card != null) { clearTimeout(brainT); return applyPlay(s, s.turn, mv.card); }
+    clearTimeout(brainT);
+    const p = players()[s.turn];
+    if (p && p.online === false) brainT = setTimeout(() => autoPlay(s.seq), AUTO_MS);
+  } else if (s.phase === "trickEnd") {
+    clearTimeout(brainT); brainT = setTimeout(() => afterTrick(s.seq), Math.max(50, s.at + TRICK_MS - serverNow()));
+  } else if (s.phase === "captain") {
+    const mv = (room.moves || {})[s.res.winner];
+    if (mv && mv.seq === s.seq && mv.lead && players()[mv.lead]) { clearTimeout(brainT); return startTrick(s, mv.lead); }
+    clearTimeout(brainT);
+    const p = players()[s.res.winner];
+    if (p && p.online === false) brainT = setTimeout(() => { if (room.state.seq === s.seq) startTrick(room.state, nextSeat(s.res.winner)); }, AUTO_MS);
+  }
+}
+function applyPlay(s, p, card) {
+  if (room.state.seq !== s.seq) return;
+  const trick = trickOf(s).concat([{ p, c: card }]);
+  if (trick.length < order().length) return setState({ trick, turn: nextSeat(p), seq: s.seq + 1, first: null });
+  const res = resolve(trick);
+  setState({ phase: "trickEnd", trick, turn: null, seq: s.seq + 1, first: null, res, at: TS });
+}
+function afterTrick(seq) {
+  const s = room.state; if (s.seq !== seq || s.phase !== "trickEnd") return;
+  const taken = Object.assign({}, s.taken || {}); taken[s.res.winner] = (taken[s.res.winner] || 0) + 1;
+  if (s.trickNo >= s.perHand) return endRound(s, taken);
+  if (s.res.cap) return setState({ phase: "captain", taken, seq: s.seq + 1, at: TS });
+  startTrick(Object.assign({}, s, { taken }), s.res.winner);
+}
+function startTrick(s, leader) {
+  setState({ phase: "play", trick: null, turn: leader, leader, trickNo: s.trickNo + 1, seq: s.seq + 1, taken: s.taken || {}, res: s.phase === "captain" ? Object.assign({}, s.res, { pickedBy: s.res.winner, picked: leader }) : null, at: TS });
+}
+function endRound(s, taken) {
+  const sc = Object.assign({}, scores()), o = order();
+  o.forEach(id => { sc[id] = (sc[id] || 0) + (taken[id] || 0); });
+  const over = o.some(id => sc[id] >= s.sinkAt);
+  const upd = {};
+  upd.scores = sc;
+  upd[`log/${s.round}`] = Object.fromEntries(o.map(id => [id, taken[id] || 0]));
+  upd.state = Object.assign({}, s, { phase: over ? "gameOver" : "roundEnd", taken, seq: s.seq + 1, at: TS, trick: null, turn: null });
+  roomRef.update(upd);
+}
+async function deal() {
+  const s = room.state, o = order(), n = o.length, deck = shuffle(deckFor(n)), per = deck.length / n, fc = firstCard(n);
+  const upd = {}; let leader = o[0];
+  o.forEach((id, i) => { const h = deck.slice(i * per, (i + 1) * per).sort((a, b) => a - b); if (h.includes(fc)) leader = id; upd[`rooms/${code}/hands/${id}`] = h; });
+  await db.ref().update(upd);
+  setState({ phase: "play", order: o, round: (s.round || 0) + 1, trickNo: 1, perHand: per, sinkAt: sinkAt(n), turn: leader, leader, first: fc, trick: null, taken: null, res: null, seq: (s.seq || 0) + 1, at: TS });
+}
+async function autoPlay(seq) {
+  const s = room.state; if (s.seq !== seq || s.phase !== "play") return;
+  const p = s.turn, hs = await db.ref(`rooms/${code}/hands/${p}`).once("value"), hand = (hs.val() || []).filter(v => v != null);
+  if (!hand.length || room.state.seq !== seq) return;
+  const card = Math.min(...legalCards(hand, trickOf(s), s.first));
+  await db.ref(`rooms/${code}/hands/${p}`).set(hand.filter(c => c !== card));
+  applyPlay(s, p, card);
+  toast(`${nameOf(p)} is away, so a card was played for them`);
+}
+$("startBtn").onclick = async () => {
+  const n = Object.keys(players()).length; if (n < MIN_P || n > MAX_P) return;
+  $("startBtn").disabled = true;
+  await roomRef.update({ scores: null, log: null, moves: null, settings: { preview: $("optPreview").checked }, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, order: Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0)), round: 0 } });
+  await deal();
+  $("startBtn").disabled = false;
+};
+function nextRound() { if (isHost && room.state.phase === "roundEnd") deal(); }
+function backToLobby() { if (!isHost) return; closeSheet(); roomRef.update({ scores: null, log: null, moves: null, state: { phase: "lobby", seq: (room.state.seq || 0) + 1 } }); Object.keys(players()).forEach(id => db.ref(`rooms/${code}/hands/${id}`).remove()); }
+
+// ---------- PLAYER actions ----------
+let selCard = null;
+function pick(card) {
+  const s = room.state; if (s.phase !== "play" || s.turn !== uid) return;
+  if (!legalCards(myHand, trickOf(s), s.first).includes(card)) { toast(trickOf(s).length ? "You must match a suit already in the trick" : "You must lead with the " + s.first); return; }
+  if (selCard === card) return playSelected();
+  selCard = card; renderHand(); renderPreview();
+}
+async function playSelected() {
+  const s = room.state; if (selCard == null || s.phase !== "play" || s.turn !== uid) return;
+  const card = selCard; selCard = null;
+  const el = document.querySelector(`.hcard[data-c="${card}"]`); if (el) el.classList.add("playing");
+  if (navigator.vibrate) navigator.vibrate(25);
+  await db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, card });
+  await db.ref(`rooms/${code}/hands/${uid}`).transaction(h => (h || []).filter(c => c != null && c !== card));
+}
+$("playBtn").onclick = playSelected;
+// cards overlap, so a tap picks whichever card's visible slice is under the finger (keyboard presses use the focused card)
+$("hand").addEventListener("click", e => {
+  const b = e.target.closest(".hcard");
+  if (b && e.detail === 0) return pick(+b.dataset.c);
+  const h = $("hand"), n = myHand.length; if (!n) return;
+  const x = e.clientX - h.getBoundingClientRect().left, step = +h.dataset.step || 1, cw = +h.dataset.cw;
+  let i = Math.floor(x / step); if (i >= n - 1) i = x <= step * (n - 1) + cw ? n - 1 : -1;
+  if (i >= 0) pick(myHand[i]);
+});
+function chooseLeader(id) { const s = room.state; if (s.phase !== "captain" || s.res.winner !== uid) return; db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, lead: id }); closeSheet(); }
+
+// ---------- RENDER ----------
+let lastPhase = null, lastTrickLen = 0, lastRound = null;
+function render() {
+  if (!room || !room.state) return;
+  const s = room.state;
+  if (s.phase === "lobby") { show("vLobby"); closeSheet(); return renderLobby(); }
+  show("vGame");
+  renderTop(s); renderSeats(s); renderTable(s); renderHand(); renderPreview();
+  if (s.phase === "captain") { if (s.res.winner === uid) openCaptain(s); else closeSheet("cap"); }
+  else if (s.phase === "roundEnd" || s.phase === "gameOver") openScores(s, true);
+  else if (lastPhase === "roundEnd" || lastPhase === "gameOver" || lastPhase === "captain") closeSheet();
+  lastPhase = s.phase;
+}
+function renderLobby() {
+  $("lobbyCode").textContent = code;
+  const url = location.origin + location.pathname + "?room=" + code;
+  if ($("qr").dataset.u !== url) { $("qr").dataset.u = url; $("qr").innerHTML = ""; try { new QRCode($("qr"), { text: url, width: 136, height: 136, colorDark: "#0b1a2e", colorLight: "#ffffff" }); } catch (e) {} }
+  const ids = order(), n = ids.length;
+  $("lobbyCount").textContent = `Sailors · ${n} of 6`;
+  $("lobbyList").innerHTML = ids.map(id => { const p = players()[id]; return `<div class="prow">${avatar(p, 34)}<span>${esc(p.name)}${id === uid ? " (you)" : ""}</span>${id === room.hostUid ? '<span class="host">HOST</span>' : ""}${p.online === false ? '<span class="host" style="color:var(--red)">AWAY</span>' : ""}</div>`; }).join("");
+  $("hostBox").classList.toggle("hidden", !isHost); $("guestBox").classList.toggle("hidden", isHost);
+  $("startBtn").disabled = n < MIN_P || n > MAX_P;
+  $("startHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points`;
+}
+function renderTop(s) {
+  $("gRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)} of ${s.perHand}`;
+}
+function seatHTML(id, s, mine) {
+  const p = players()[id] || { name: "?" }, taken = (s.taken || {})[id] || 0, played = trickOf(s).some(t => t.p === id) ? 1 : 0;
+  const left = s.phase === "play" ? s.perHand - (s.trickNo - 1) - played : Math.max(0, s.perHand - s.trickNo);
+  const turn = (s.phase === "play" && s.turn === id) || (s.phase === "captain" && s.res && s.res.winner === id);
+  return `<div class="opp ${turn ? "turn" : ""}" data-seat="${id}">
+      <div class="avwrap">${avatar(p, mine ? 34 : 42)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
+      ${mine ? `<div style="display:flex;flex-direction:column"><span class="nm">You</span><span class="meta">${taken} taken · ${(scores()[id] || 0)} pts</span></div>` :
+      `<span class="nm">${esc(p.name)}</span><span class="meta">${left} card${left === 1 ? "" : "s"} · ${taken} taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
+    </div>`;
+}
+function renderSeats(s) {
+  const o = order(), me = o.indexOf(uid), others = o.slice(me + 1).concat(o.slice(0, Math.max(0, me)));
+  $("opps").innerHTML = others.map(id => seatHTML(id, s, false)).join("");
+  $("meSeat").outerHTML = seatHTML(uid, s, true).replace('class="opp', 'id="meSeat" style="flex-direction:row;gap:8px;padding:4px 8px" class="opp');
+}
+function renderTable(s) {
+  const trick = trickOf(s), tEl = $("trick");
+  const live = trick.length ? resolve(trick) : null;
+  const sweeping = s.phase === "trickEnd" && serverNow() - s.at > TRICK_MS - 900;
+  const animateFrom = (lastRound === s.round && trick.length === lastTrickLen + 1) ? trick.length - 1 : -1;
+  const tKey = s.round + "|" + s.trickNo + "|" + s.phase + "|" + trick.map(t => t.c).join(",") + "|" + (s.turn || "");
+  const same = tEl.dataset.key === tKey; tEl.dataset.key = tKey;
+  if (same) {} else if (trick.length) {
+    tEl.innerHTML = trick.map((t, i) => {
+      const seat = document.querySelector(`.opp[data-seat="${t.p}"]`) || $("meSeat");
+      let fx = 0, fy = -80;
+      if (seat && i === animateFrom) { const a = seat.getBoundingClientRect(), b = tEl.getBoundingClientRect(); fx = (a.left + a.width / 2) - (b.left + b.width / 2); fy = (a.top + a.height / 2) - (b.top + b.height / 2); }
+      return `<div class="tslot ${i === animateFrom ? "fly" : ""} ${live && live.winner === t.p ? "win" : ""}" style="--fx:${fx}px;--fy:${fy}px">${cardHTML(t.c)}<span class="who">${t.p === uid ? "You" : esc(nameOf(t.p))}</span></div>`;
+    }).join("");
+  } else {
+    const lead = s.phase === "play" ? s.turn : null;
+    tEl.innerHTML = `<div class="empty">${lead === uid ? "You lead this trick" : lead ? esc(nameOf(lead)) + " leads this trick" : ""}</div>`;
+  }
+  if (!same) tEl.classList.remove("sweep");
+  if (s.phase === "trickEnd" && !same) {
+    const w = document.querySelector(`.opp[data-seat="${s.res.winner}"]`) || $("meSeat");
+    const go = () => { const a = w.getBoundingClientRect(), b = tEl.getBoundingClientRect(); tEl.style.setProperty("--sx", ((a.left + a.width / 2) - (b.left + b.width / 2)) + "px"); tEl.style.setProperty("--sy", ((a.top + a.height / 2) - (b.top + b.height / 2)) + "px"); tEl.classList.add("sweep"); };
+    if (sweeping) go(); else { clearTimeout(window.__sweepT); window.__sweepT = setTimeout(() => { if (room && room.state.phase === "trickEnd" && room.state.seq === s.seq) go(); }, Math.max(0, s.at + TRICK_MS - 900 - serverNow())); }
+  }
+  lastTrickLen = trick.length; lastRound = s.round;
+  // suit counts
+  const counts = live ? live.counts : {};
+  if (!same) $("bars").innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(k => { const su = SUITS.find(x => x.k === k); return `<div class="bar"><span class="lab" style="color:${su.col}">${su.name}</span><span class="segs">${Array.from({ length: counts[k] }, () => `<span class="seg" style="background:${su.col}"></span>`).join("")}</span></div>`; }).join("");
+  // status line and result banner
+  const st = $("status"); st.classList.remove("mine");
+  document.querySelectorAll("#table .banner").forEach(b => { if (b.dataset.seq !== String(s.seq)) b.remove(); });
+  if (s.phase === "play") {
+    if (s.turn === uid) {
+      st.classList.add("mine");
+      const lc = legalCards(myHand, trick, s.first);
+      st.textContent = !trick.length ? (s.first != null && myHand.includes(s.first) ? `Your lead: you must open with the ${s.first}` : "Your lead: play any card") : lc.length === myHand.length && !myHand.some(c => new Set(trick.map(t => suitOf(t.c).k)).has(suitOf(c).k)) ? "Your turn: no match, so play anything" : "Your turn: match a suit already on the table";
+    } else st.textContent = `Waiting for ${nameOf(s.turn)}…`;
+    if (s.res && s.res.picked && s.trickNo > 1 && !trick.length) st.textContent = `${s.res.pickedBy === uid ? "You" : nameOf(s.res.pickedBy)} sent ${s.res.picked === uid ? "you" : nameOf(s.res.picked)} to lead` + (s.turn === uid ? ". Your lead: play any card" : "");
+  } else if (s.phase === "trickEnd") {
+    st.textContent = "";
+    if (!document.querySelector(`#table .banner[data-seq="${s.seq}"]`)) {
+      const r = s.res, su = SUITS.find(x => x.k === suitOf(r.card).k), counts2 = Object.values(r.counts).sort((a, b) => b - a);
+      const why = r.tied.length > 1 ? `${r.tied.map(k => SUITS.find(x => x.k === k).name).join(" and ")} tie at ${r.most}, highest card wins.` : Object.keys(r.counts).length > 1 ? `${su.name} has the most cards (${counts2.join(" vs ")}).` : `All ${su.name}.`;
+      const b = document.createElement("div"); b.className = "banner"; b.dataset.seq = s.seq;
+      b.innerHTML = `${why}<br><span style="color:var(--gold)">${r.winner === uid ? "You take" : esc(nameOf(r.winner)) + " takes"} the trick with the ${r.card}.</span>${r.cap ? '<br><span class="cap">Captain\'s card! ' + (r.winner === uid ? "You choose" : esc(nameOf(r.winner)) + " chooses") + " who leads next</span>" : ""}`;
+      $("table").appendChild(b);
+      if (r.winner === uid && navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    }
+  } else if (s.phase === "captain") st.textContent = s.res.winner === uid ? "Choose who leads next" : `${nameOf(s.res.winner)} is choosing who leads next…`;
+  else st.textContent = "";
+}
+function renderHand() {
+  const s = room.state, h = $("hand"), myTurn = s.phase === "play" && s.turn === uid;
+  const legal = myTurn ? legalCards(myHand, trickOf(s), s.first) : [];
+  if (selCard != null && (!myTurn || !legal.includes(selCard))) selCard = null;
+  const n = myHand.length, W = (h.parentElement.clientWidth || 360) - 12, cw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cw")) || 62;
+  const step = n > 1 ? Math.min(cw * 0.92, (W - cw - 8) / (n - 1)) : 0, total = step * (n - 1) + cw;
+  h.style.width = total + "px"; h.dataset.step = step; h.dataset.cw = cw;
+  h.innerHTML = myHand.map((c, i) => {
+    const off = i - (n - 1) / 2, rot = n > 1 ? off * Math.min(2, 16 / n) : 0;
+    const cls = !myTurn ? "" : c === selCard ? "sel" : legal.includes(c) ? "ok" : "ill";
+    return `<button class="hcard ${cls}" data-c="${c}" style="left:${i * step}px;rotate:${rot}deg;z-index:${i + 1}" aria-label="${suitOf(c).name} ${c}${myTurn && !legal.includes(c) ? ", can't be played now" : ""}">${cardHTML(c)}</button>`;
+  }).join("");
+  const pb = $("playBtn");
+  pb.disabled = !(myTurn && selCard != null);
+  pb.textContent = !myTurn ? (s.phase === "play" ? `${nameOf(s.turn)}'s turn` : "…") : selCard == null ? "Tap a card" : `Play ${suitOf(selCard).name} ${selCard}`;
+}
+function renderPreview() {
+  const s = room.state, el = $("preview");
+  if (!room.settings || !room.settings.preview || s.phase !== "play" || s.turn !== uid || selCard == null) { el.innerHTML = ""; return; }
+  const trick = trickOf(s).concat([{ p: uid, c: selCard }]), r = resolve(trick), left = order().length - trick.length;
+  const mine = r.winner === uid;
+  const who = mine ? "You would take this trick" : `${nameOf(r.winner)}'s ${r.card} would take it`;
+  const more = left ? ` · ${left} still to play, so it can change` : "";
+  el.innerHTML = `<div class="preview ${mine ? "risk" : "safe"}"><span class="k">IF YOU PLAY THE ${selCard}</span>${who}${r.cap && mine ? ", with a Captain: you'd choose the next leader" : ""}${more}</div>`;
+}
+
+// ---------- sheets ----------
+function closeSheet(only) { const h = $("sheetHost"); if (only && h.dataset.kind !== only) return; h.innerHTML = ""; h.dataset.kind = ""; }
+function openCaptain(s) {
+  const h = $("sheetHost"); if (h.dataset.kind === "cap" && h.dataset.seq === String(s.seq)) return;
+  h.dataset.kind = "cap"; h.dataset.seq = s.seq;
+  const o = order();
+  h.innerHTML = `<div class="sheet"><div class="box"><div style="display:flex;justify-content:center;margin-bottom:10px">${cardHTML(s.res.card).replace('class="pc', 'style="--w:110px" class="pc')}</div><h2>Captain's call</h2><div class="sub">You took the trick with a Captain. Pick who leads the next trick.</div>
+    ${o.map(id => { const p = players()[id]; return `<button class="pickbtn" onclick="chooseLeader('${id}')">${avatar(p, 34)}<span>${id === uid ? "Me" : esc(p.name)}</span><span class="meta">${(s.taken || {})[id] || 0} taken this round</span></button>`; }).join("")}</div></div>`;
+}
+function openScores(s, auto) {
+  const h = $("sheetHost"), key = s.phase + s.seq;
+  if (auto && h.dataset.kind === "scores" && h.dataset.seq === key) return;
+  h.dataset.kind = "scores"; h.dataset.seq = auto ? key : "manual";
+  const o = order(), sc = scores(), log = room.log || {}, lastR = log[s.round] || {}, sink = s.sinkAt || 15;
+  const rows = o.map(id => ({ id, tot: sc[id] || 0, d: lastR[id] || 0 })).sort((a, b) => a.tot - b.tot);
+  let place = 0, prev = null;
+  const over = s.phase === "gameOver", best = rows.length ? rows[0].tot : 0;
+  const winners = rows.filter(r => r.tot === best).map(r => r.id);
+  const title = over ? (winners.includes(uid) ? (winners.length > 1 ? "You share the win!" : "You stayed afloat!") : `${winners.map(nameOf).join(" & ")} ${winners.length > 1 ? "win" : "wins"}!`) : auto ? `End of round ${s.round}` : "Scores";
+  const sub = over ? "Lowest score wins. Someone's ship went down." : `First ship to ${sink} points sinks and ends the game. Lowest score wins.`;
+  h.innerHTML = `<div class="sheet"><div class="box"><h2>${title}</h2><div class="sub">${sub}</div>
+    ${rows.map((r, i) => { if (r.tot !== prev) { place = i + 1; prev = r.tot; } const p = players()[r.id] || {}; return `<div class="srow ${i === 0 ? "leader" : ""}"><span class="place">${place}</span>${avatar(p, 30)}<span>${r.id === uid ? "You" : esc(p.name)}</span><span class="d">${s.phase === "roundEnd" || over ? "+" + r.d : ""}</span><span class="tot">${r.tot}</span><div class="sink"><div style="width:${Math.min(100, r.tot / sink * 100)}%"></div></div></div>`; }).join("")}
+    <div style="margin-top:16px" class="stack">
+      ${s.phase === "roundEnd" ? (isHost ? `<button class="btn" onclick="nextRound()">Deal round ${s.round + 1}</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for the host to deal round ${s.round + 1}…</div>`) : ""}
+      ${over ? (isHost ? `<button class="btn" onclick="backToLobby()">Play again</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for the host…</div>`) : ""}
+      ${!auto ? `<button class="btn ghost" onclick="closeSheet()">Close</button>` : ""}
+    </div></div></div>`;
+  if (over && auto && winners.includes(uid)) confetti();
+}
+$("scoresBtn").onclick = () => openScores(room.state, false);
+function confetti() { for (let i = 0; i < 70; i++) { const c = document.createElement("div"); c.className = "confetti"; c.style.left = Math.random() * 100 + "vw"; c.style.background = ["#f2c14e", "#7fd3ff", "#ff8a7a", "#6fd39a"][i % 4]; c.style.animationDuration = 2 + Math.random() * 2 + "s"; c.style.animationDelay = Math.random() * 0.8 + "s"; document.body.appendChild(c); setTimeout(() => c.remove(), 5000); } }
+window.addEventListener("resize", () => { if (room && room.state && room.state.phase !== "lobby") renderHand(); });
+</script>
+</body>
+</html>

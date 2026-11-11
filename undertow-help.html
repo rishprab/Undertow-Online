@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to play Undertow</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Nunito+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: radial-gradient(ellipse at 50% 0%, #17375a, #0b1a2e 60%, #050c18) fixed; color: #eaf1f8; font-family: 'Nunito Sans', system-ui, sans-serif; line-height: 1.6; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px 18px 60px; }
+  h1 { font-family: Cinzel, serif; color: #f2c14e; letter-spacing: 5px; text-align: center; margin: 0; font-size: 2.2rem; }
+  .tag { text-align: center; color: #a9bdd2; font-weight: 700; margin-bottom: 28px; }
+  h2 { font-family: Cinzel, serif; color: #f2c14e; font-size: 1.25rem; margin: 30px 0 8px; }
+  section { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 4px 18px 12px; margin-bottom: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+  td, th { padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
+  th { color: #a9bdd2; font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; }
+  .dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .ex { background: rgba(0,0,0,0.25); border-radius: 12px; padding: 10px 14px; margin: 8px 0; }
+  b.g { color: #f2c14e; }
+  a { color: #f2c14e; font-weight: 800; }
+  .credit { color: #a9bdd2; font-size: 0.85rem; text-align: center; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>UNDERTOW</h1>
+  <div class="tag">A trick-dodging card game for 3–6 sailors</div>
+
+  <section>
+    <h2>The goal</h2>
+    <p>Every trick you take is a point, and <b class="g">points are bad</b>. The game ends at the end of the round in which someone's ship sinks (reaches the limit below). The <b class="g">lowest score wins</b>.</p>
+    <table><tr><th>Sailors</th><th>Cards each</th><th>Ship sinks at</th></tr>
+      <tr><td>3</td><td>15 (Driftwood and Leviathan removed)</td><td>15</td></tr>
+      <tr><td>4</td><td>15</td><td>15</td></tr>
+      <tr><td>5</td><td>12</td><td>12</td></tr>
+      <tr><td>6</td><td>10</td><td>10</td></tr></table>
+  </section>
+
+  <section>
+    <h2>The deck</h2>
+    <p>60 cards in eight suits. The smaller a suit, the higher its numbers. The top card of each suit is its <b class="g">Captain</b> (gold border).</p>
+    <table><tr><th>Suit</th><th>Cards</th><th>Captain</th></tr>
+      <tr><td><span class="dot" style="background:#E08A2E"></span>Driftwood</td><td>0–10</td><td>10</td></tr>
+      <tr><td><span class="dot" style="background:#D9473F"></span>Coral</td><td>11–20</td><td>20</td></tr>
+      <tr><td><span class="dot" style="background:#9AA7B5"></span>Mist</td><td>21–29</td><td>29</td></tr>
+      <tr><td><span class="dot" style="background:#3D86CF"></span>Glacier</td><td>31–38</td><td>38</td></tr>
+      <tr><td><span class="dot" style="background:#2F8C55"></span>Shoals</td><td>41–47</td><td>47</td></tr>
+      <tr><td><span class="dot" style="background:#7A55C9"></span>Tempest</td><td>51–56</td><td>56</td></tr>
+      <tr><td><span class="dot" style="background:#22B3AA"></span>Maelstrom</td><td>61–65</td><td>65</td></tr>
+      <tr><td><span class="dot" style="background:#8E2443"></span>Leviathan</td><td>71–74</td><td>74</td></tr></table>
+  </section>
+
+  <section>
+    <h2>Playing a trick</h2>
+    <p>Whoever holds the <b class="g">0</b> opens the first trick of each round with it (with 3 sailors, the <b class="g">11</b>). Play goes round the table, one card each.</p>
+    <p><b class="g">Following:</b> if you hold a card of <i>any</i> suit already in the trick, you must play one of them. If you can't, play anything, which adds a new suit to the trick.</p>
+    <p>The game lights up only the cards you're allowed to play.</p>
+  </section>
+
+  <section>
+    <h2>Who takes the trick</h2>
+    <p>The suit with the <b class="g">most cards</b> in the trick wins, and the <b class="g">highest card of that suit</b> takes it. If suits tie for most cards, the highest card among the tied suits takes it.</p>
+    <div class="ex">Coral 14, Coral 17, Glacier 36, Glacier 33, Glacier 38 → Glacier has 3 cards to Coral's 2, so the <b class="g">38</b> takes it.</div>
+    <div class="ex">Coral 14, Coral 17, Glacier 36, Glacier 33 → 2 each, so the highest of them, the <b class="g">36</b>, takes it.</div>
+    <p>So a big number is dangerous only if its suit ends up the biggest group. The “If you play this” box (the host can switch it on in the lobby) shows who would take the trick right now if you played the card you've picked.</p>
+    <p>The trick-taker leads the next trick with any card.</p>
+  </section>
+
+  <section>
+    <h2>Captains</h2>
+    <p>If you take a trick with a Captain, the point still counts, but you <b class="g">choose who leads the next trick</b>. Use it to put a rival on the spot.</p>
+  </section>
+
+  <section>
+    <h2>Playing online</h2>
+    <p>One person creates a game and shares the 4-letter code or QR code. Everyone plays on their own phone or laptop, and your hand is private. Tap a card to pick it, then tap it again or press Play.</p>
+    <p>If someone drops out, they can open the game again to rejoin. While they're away, a card is played for them after about 20 seconds so the game can keep going.</p>
+  </section>
+
+  <p style="text-align:center"><a href="index.html">Back to the game</a></p>
+  <div class="credit">Undertow is a fan-made online version of the trick-taking game Seas of Strife.<br>Card art: Turner, Haeckel, Friedrich, Vernet, Rembrandt (public domain). Leviathan: original.</div>
+</main>
+</body>
+</html>
