@@ -71,7 +71,7 @@
   #vGame { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; padding: 8px 10px 12px; min-height: 100dvh; }
   .topbar { display: flex; align-items: center; gap: 8px; padding: 4px 2px 8px; }
   .topbar .t1 { font-family: Cinzel, serif; font-weight: 800; color: var(--gold); letter-spacing: 2px; }
-  .topbar .t2 { color: var(--muted); font-weight: 700; font-size: 0.85rem; }
+  .topbar .t2 { color: var(--muted); font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
   .topbar .sp { flex: 1; }
   .pill { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 5px 11px; font-weight: 800; font-size: 0.82rem; color: var(--ink); }
   .opps { display: flex; justify-content: space-around; gap: 6px; flex-wrap: wrap; padding: 2px 0 6px; }
@@ -92,8 +92,8 @@
   .tslot.win .pc { box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(242,193,78,0.85); transform: translateY(-6px); }
   .tslot.win::before { content: "WINNING"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.58rem; font-weight: 800; letter-spacing: 1.2px; border-radius: 6px; padding: 1px 5px; z-index: 2; }
   .tslot .pc { transition: transform 0.3s, box-shadow 0.3s; }
-  .tslot.fly .pc { animation: fly 0.5s cubic-bezier(.2,1.25,.4,1) both; }
-  @keyframes fly { from { opacity: 0; transform: translate(var(--fx, 0), var(--fy, -60px)) rotate(var(--fr, -14deg)) scale(0.6); } to { opacity: 1; transform: none; } }
+  .tslot.fly .pc { animation: fly 0.55s cubic-bezier(.2,1.2,.4,1) both; }
+  @keyframes fly { from { opacity: 0.4; transform: translate(var(--fx, 0), var(--fy, -60px)) rotate(var(--fr, -14deg)) rotateY(180deg) scale(0.6); } to { opacity: 1; transform: none; } }
   .trick.sweep .tslot { transition: transform 0.75s cubic-bezier(.5,0,.75,0), opacity 0.75s; transform: translate(var(--sx, 0), var(--sy, -200px)) scale(0.15) rotate(300deg); opacity: 0; }
   .trick .empty { color: var(--muted); font-weight: 700; padding: 30px 0; text-align: center; }
   .bars { display: flex; flex-direction: column; gap: 4px; min-height: 18px; }
@@ -149,7 +149,7 @@
   .pickbtn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; border: 2px solid var(--line); background: rgba(255,255,255,0.05); color: var(--ink); font-weight: 800; font-size: 1rem; margin-bottom: 8px; text-align: left; }
   .pickbtn:hover { border-color: var(--gold); }
   .pickbtn .meta { margin-left: auto; color: var(--muted); font-size: 0.8rem; }
-  .srow { display: grid; grid-template-columns: 28px 34px 1fr auto 44px; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); font-weight: 800; }
+  .srow { display: grid; grid-template-columns: 22px 30px minmax(0, 1fr) auto 30px 34px; gap: 8px; align-items: center; padding: 8px 4px; border-bottom: 1px solid var(--line); font-weight: 800; }
   .srow .place { font-family: Cinzel, serif; color: var(--gold); }
   .srow .d { color: var(--red); font-size: 0.85rem; }
   .srow .tot { font-family: Cinzel, serif; font-size: 1.2rem; text-align: right; }
@@ -159,8 +159,148 @@
   .confetti { position: fixed; top: -10px; width: 8px; height: 14px; z-index: 80; pointer-events: none; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
 
+  /* ---------- stage 2: animation pieces shared by every screen ---------- */
+  .pc .back-face { position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 50% 45%, #1d4670, #0d2440 70%); border: 2px solid var(--gold2); opacity: 0; pointer-events: none; z-index: 5; }
+  .tslot.fly .pc .back-face { animation: unflip 0.55s both; }
+  @keyframes unflip { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
+  .tslot.win::after { content: ""; position: absolute; left: 50%; top: 0; width: var(--tw); height: calc(var(--tw) * 1.43); transform: translate(-50%, -6px); border-radius: calc(var(--tw) * 0.1); box-shadow: 0 0 26px 4px rgba(242,193,78,0.55); animation: glow 1.6s ease-in-out infinite; pointer-events: none; }
+  @keyframes glow { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  .trick.ended .tslot:not(.win) .pc { filter: brightness(0.5) saturate(0.6); transform: scale(0.93); }
+  .trick.ended .tslot.win .pc { transform: translateY(-12px) scale(1.08); }
+  .opp.turn .av, .seat.turn .av { animation: turnring 1.4s ease-in-out infinite; }
+  @keyframes turnring { 0%, 100% { box-shadow: 0 0 0 3px #7fd3ff, 0 0 10px rgba(127,211,255,0.5); } 50% { box-shadow: 0 0 0 5px #7fd3ff, 0 0 26px rgba(127,211,255,0.95); } }
+  .status.mine { animation: nudge 1.8s ease-in-out infinite; }
+  @keyframes nudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  .bump { display: inline-block; animation: bump 0.7s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.7); color: var(--gold); } 100% { transform: scale(1); } }
+  .hcard.dealt { animation: dealin 0.5s cubic-bezier(.2,1.2,.4,1) both; animation-delay: var(--d, 0s); }
+  @keyframes dealin { from { opacity: 0; transform: translateY(-160px) rotate(-25deg) scale(0.6); } }
+  @keyframes pop2 { from { opacity: 0; transform: translateY(20px) scale(0.85); } to { opacity: 1; transform: none; } }
+
+  /* sinking-ship gauge: --p is score / sink limit */
+  .shipg { --p: 0; position: relative; width: 4.6em; height: 2.6em; border-radius: 0.5em; overflow: hidden; background: linear-gradient(180deg, rgba(23,55,90,0.6), rgba(11,26,46,0.9)); font-size: 15px; flex: 0 0 auto; }
+  .shipg .hull { position: absolute; left: 0.9em; bottom: 0.5em; width: 2.8em; transform: translateY(calc(var(--p) * 1.2em)) rotate(calc(var(--p) * 10deg)); transition: transform 1.6s cubic-bezier(.4,0,.3,1), opacity 1.6s; }
+  .shipg .hull svg { display: block; width: 100%; animation: bob 3.2s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-0.12em) rotate(2deg); } }
+  .shipg .water { position: absolute; left: -0.5em; right: -0.5em; bottom: 0; height: 1em; background: linear-gradient(180deg, rgba(90,160,230,0.85), rgba(19,48,79,0.97)); border-radius: 45% 55% 0 0 / 0.35em 0.35em 0 0; animation: slosh 2.6s ease-in-out infinite alternate; }
+  @keyframes slosh { from { transform: translateX(-0.25em); } to { transform: translateX(0.25em); } }
+  .shipg.sunk .hull { transform: translateY(2.4em) rotate(35deg); opacity: 0.3; transition-duration: 2.6s; }
+  .shipg.sunk::after { content: ""; position: absolute; left: 45%; bottom: 0.4em; width: 0.35em; height: 0.35em; border-radius: 50%; border: 1px solid rgba(255,255,255,0.85); animation: bubble 1.3s ease-in infinite; }
+  @keyframes bubble { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-1.7em); opacity: 0; } }
+  .shipg.afloat .hull { transform: translateY(-0.25em); }
+
+  /* captain's light */
+  .rays { position: absolute; left: 50%; top: 50%; width: 90vmin; height: 90vmin; margin: -45vmin 0 0 -45vmin; border-radius: 50%; background: repeating-conic-gradient(rgba(242,193,78,0.25) 0deg 7deg, rgba(242,193,78,0) 7deg 30deg); -webkit-mask: radial-gradient(circle, #000 15%, transparent 68%); mask: radial-gradient(circle, #000 15%, transparent 68%); animation: spin 20s linear infinite; pointer-events: none; }
+  .rays.sm { width: 300px; height: 300px; margin: -150px 0 0 -150px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .caprise { position: relative; animation: rise 0.9s cubic-bezier(.2,1.2,.4,1) both; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(60px) scale(0.6) rotate(-12deg); } 60% { opacity: 1; transform: translateY(-8px) scale(1.05) rotate(3deg); } 100% { transform: none; } }
+  .pc .sheen { position: absolute; top: 0; bottom: 0; width: 70%; background: linear-gradient(110deg, rgba(255,255,255,0), rgba(255,240,200,0.45) 50%, rgba(255,255,255,0)); animation: sheen 3s ease-in-out infinite; z-index: 4; pointer-events: none; }
+  @keyframes sheen { 0%, 40% { transform: translateX(-140%); } 70%, 100% { transform: translateX(240%); } }
+
+  /* phones when a TV is the table: a compact trick strip, bigger hand */
+  body.tvmode #opps, body.tvmode #bars, body.tvmode .mutebtn, body.tvmode #optPreviewRow { display: none; }
+  body.tvmode { --cw: 72px; }
+  body.tvmode .table { flex: 0 0 auto; min-height: 0; border-radius: 16px; padding: 14px 6px 10px; margin: 2px 0 8px; --tw: 58px; gap: 6px; }
+  body.tvmode .trick { min-height: calc(var(--tw) * 1.43 + 18px); }
+  body.tvmode .trick .empty { padding: 14px 0; }
+  body.tvmode .table .banner { position: static; transform: none; width: 100%; padding: 8px 10px; font-size: 0.85rem; animation: pop2 0.35s both; }
+  body.tvmode #preview { margin-top: auto; }
+  .tvnote { display: none; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.8rem; }
+  body.tvmode .tvnote { display: block; }
+
+  /* ---------- TV: the shared table ---------- */
+  body.tv { overflow: hidden; }
+  #vTVLobby, #vTVGame { position: fixed; inset: 0; }
+  #vTVGame { display: flex; flex-direction: column; }
+  .tvsea { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .tvsea .wave { position: absolute; left: -10%; width: 120%; height: 34vh; bottom: -14vh; border-radius: 45%; background: rgba(61,134,207,0.08); animation: drift 14s ease-in-out infinite alternate; }
+  .tvsea .w2 { bottom: -19vh; background: rgba(34,179,170,0.07); animation-duration: 19s; animation-direction: alternate-reverse; }
+  .tvsea .w3 { bottom: -24vh; background: rgba(5,12,24,0.55); animation-duration: 23s; }
+  .tvsea .glint { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 18%, rgba(242,193,78,0.07), rgba(0,0,0,0) 50%); animation: drift 11s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translateX(-4%) rotate(-1deg); } to { transform: translateX(4%) rotate(1deg); } }
+  .tvlobby { position: relative; z-index: 1; height: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; align-items: center; padding: 4vh 6vw; }
+  .tvl-left { display: flex; flex-direction: column; align-items: center; gap: 1.6vh; }
+  .tvlogo { font-size: clamp(40px, 5.5vw, 100px); }
+  .qr.big { width: auto; height: auto; padding: 14px; }
+  .tvcode { font-size: clamp(48px, 6vw, 110px); }
+  .tvurl { color: var(--muted); font-weight: 700; font-size: clamp(14px, 1.3vw, 22px); }
+  .tvl-right { display: flex; flex-direction: column; gap: 2vh; font-size: clamp(14px, 1.3vw, 22px); }
+  .tvplist { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vh 1vw; min-height: 30vh; align-content: start; }
+  .tvp { display: flex; align-items: center; gap: 0.8vw; background: rgba(0,0,0,0.25); border-radius: 14px; padding: 1vh 1vw; font-weight: 800; font-size: 1.1em; animation: pop2 0.45s cubic-bezier(.2,1.4,.4,1) both; }
+  .tvp .host { margin-left: auto; font-size: 0.65em; letter-spacing: 1.5px; color: var(--gold); }
+  .tvp .away { color: var(--red); }
+  .tvempty { color: var(--muted); font-weight: 700; grid-column: 1 / -1; }
+  .tvmute { position: absolute; right: 2vw; top: 2vh; z-index: 3; }
+  .tvtop { position: relative; z-index: 2; display: flex; align-items: center; gap: 1.2vw; padding: 1.4vh 2vw; font-size: clamp(14px, 1.4vw, 24px); }
+  .tvtop .t1 { font-family: Cinzel, serif; font-weight: 800; color: var(--gold); letter-spacing: 0.3em; font-size: 1.3em; }
+  .tvtop .t2 { color: var(--muted); font-weight: 700; }
+  .tvtop .t2 b { color: var(--gold); letter-spacing: 2px; }
+  .tvtop .sp { flex: 1; }
+  .tvmain { position: relative; z-index: 1; flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) clamp(230px, 22vw, 380px); gap: 1.5vw; padding: 0 2vw 2vh; min-height: 0; }
+  .tvtable { position: relative; min-height: 0; --tw: clamp(64px, min(7.4vw, 13vh), 150px); }
+  .tvtable .oval { position: absolute; left: 8%; right: 8%; top: 12%; bottom: 12%; border-radius: 50%; border: 2px solid rgba(242,193,78,0.22); background: radial-gradient(ellipse, rgba(23,55,90,0.75), rgba(11,26,46,0.55) 70%); box-shadow: inset 0 0 60px rgba(0,0,0,0.5), 0 0 0 10px rgba(91,56,24,0.35), 0 0 0 12px rgba(242,193,78,0.12); }
+  .tvcenter { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 1.2vh; width: 72%; }
+  .tvcenter .tslot .who { font-size: clamp(12px, 1vw, 18px); max-width: none; }
+  .tvcenter .trick .empty { font-size: clamp(14px, 1.4vw, 24px); }
+  .tvcenter .bar { font-size: clamp(12px, 1vw, 18px); }
+  .tvcenter .bar .lab { width: 7em; }
+  .tvcenter .bar .seg { width: 2vw; height: 1.4vh; }
+  .tvcenter .status { font-size: clamp(16px, 1.6vw, 28px); }
+  .tvcenter .banner { position: relative; left: auto; bottom: auto; transform: none; width: auto; max-width: 100%; font-size: clamp(14px, 1.3vw, 24px); animation: pop2 0.35s cubic-bezier(.2,1.4,.4,1) both; }
+  .seat { position: absolute; z-index: 3; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 0.4vh; padding: 0.8vh 1vw; border-radius: 16px; background: rgba(9,24,42,0.82); border: 1px solid var(--line); min-width: 9vw; transition: background 0.3s, box-shadow 0.3s; font-size: clamp(11px, 1vw, 19px); }
+  .seat.turn { background: rgba(20,55,85,0.95); box-shadow: 0 0 0 2px #7fd3ff, 0 0 30px rgba(127,211,255,0.35); }
+  .seat .avwrap { position: relative; }
+  .seat .nm { font-weight: 800; font-size: 1.2em; white-space: nowrap; }
+  .seat .meta { color: var(--muted); font-weight: 700; white-space: nowrap; }
+  .seat .meta b { color: var(--ink); }
+  .seat .fan { display: flex; height: 1.9em; padding-left: 0.6em; }
+  .seat .fan .back { --w: 1.15em; margin-left: -0.6em; }
+  .seat .off { position: absolute; top: -4px; right: -10px; font-size: 0.65em; background: #7a2a2a; color: #fff; border-radius: 6px; padding: 1px 4px; font-weight: 800; }
+  .seat .crown { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.65em; font-weight: 800; letter-spacing: 1px; border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
+  .flyback { position: fixed; z-index: 40; width: 34px; height: 48px; margin: -24px 0 0 -17px; border-radius: 5px; background: radial-gradient(circle at 50% 45%, #1d4670, #0d2440 70%); border: 1.5px solid var(--gold2); box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.5s cubic-bezier(.3,.7,.3,1), opacity 0.2s ease-in 0.35s; pointer-events: none; }
+  .arrowlayer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; overflow: visible; }
+  .arrowlayer .arc { stroke: var(--gold); stroke-width: 5; fill: none; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(242,193,78,0.8)); stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: drawarrow 1s ease-out forwards; }
+  @keyframes drawarrow { to { stroke-dashoffset: 0; } }
+  .tvside { display: flex; flex-direction: column; gap: 1.5vh; min-height: 0; overflow: hidden; font-size: clamp(11px, 0.9vw, 17px); }
+  .tvside .card-ui { padding: 1.4vh 1vw; }
+  .fleetrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 2.2em; align-items: center; gap: 0.6vw; padding: 0.35vh 0; }
+  .fleetrow .fnm { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fleetrow .shipg { font-size: clamp(9px, 0.75vw, 15px); }
+  .fleetrow .tot { font-family: Cinzel, serif; font-weight: 800; font-size: 1.4em; text-align: right; }
+  .fsink { color: var(--muted); font-weight: 700; font-size: 0.85em; margin-top: 0.4vh; }
+  .logrow { display: flex; align-items: center; gap: 0.5vw; margin: 0.45vh 0; }
+  .logrow .ln { width: 5.5em; font-weight: 800; flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; }
+  .logrow .chips { display: flex; flex-wrap: wrap; gap: 2px; }
+  .chip { min-width: 1.55em; text-align: center; font-weight: 800; font-size: 0.85em; border-radius: 4px; padding: 1px 2px; border: 1px solid rgba(255,255,255,0.14); color: rgba(234,241,248,0.32); }
+  .chip.cap { box-shadow: inset 0 -2px 0 rgba(242,193,78,0.6); }
+  .chip.on { background: var(--c); color: var(--k); border-color: transparent; }
+  .chip.new { animation: bump 0.7s cubic-bezier(.2,1.6,.4,1); }
+  .tvov { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(4,10,20,0.8); animation: fade 0.3s both; overflow: hidden; }
+  .capbox { position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2vh; }
+  .capbox .k { color: var(--gold); font-weight: 800; letter-spacing: 0.3em; font-size: clamp(14px, 1.4vw, 24px); }
+  .capbox h2 { font-family: Cinzel, serif; font-size: clamp(24px, 3vw, 52px); margin: 0; }
+  .capbox .sub, .tvbox .sub { color: var(--muted); font-weight: 700; font-size: clamp(14px, 1.4vw, 24px); }
+  .tvbox { position: relative; width: min(92vw, 1150px); text-align: center; }
+  .tvbox h2 { font-family: Cinzel, serif; color: var(--gold); font-size: clamp(28px, 3.4vw, 60px); margin: 0 0 1vh; }
+  .bigfleet { display: flex; justify-content: center; gap: 2.4vw; flex-wrap: wrap; margin: 4vh 0 2vh; }
+  .bf { display: flex; flex-direction: column; align-items: center; gap: 1vh; animation: pop2 0.5s both; animation-delay: calc(var(--i) * 0.12s); }
+  .bf .shipg { font-size: clamp(20px, 2.4vw, 42px); }
+  .bfn { display: flex; align-items: center; gap: 0.6vw; font-weight: 800; font-size: clamp(14px, 1.3vw, 24px); }
+  .bft { font-family: Cinzel, serif; font-weight: 800; font-size: clamp(22px, 2.4vw, 42px); }
+  .bft .d { color: var(--red); font-size: 0.55em; margin-left: 0.4em; font-family: 'Nunito Sans', sans-serif; }
+  .bf.winner .bfn { color: var(--gold); }
+  .tvnext { color: var(--muted); font-weight: 800; font-size: clamp(14px, 1.4vw, 24px); margin-top: 1vh; }
+  .srow .shipg { font-size: 11px; }
+  .srow .nm2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+
   @media (min-width: 700px) {
     :root { --cw: 84px; --tw: 84px; }
+    body.tvmode { --cw: 84px; }
     .opp .nm { font-size: 0.95rem; }
   }
   @media (max-width: 360px) { :root { --cw: 56px; --tw: 50px; } }
@@ -188,6 +328,8 @@
         <input class="text" id="codeIn" maxlength="4" placeholder="CODE" style="text-transform: uppercase; letter-spacing: 4px; text-align: center; font-family: Cinzel, serif" autocomplete="off" aria-label="Room code">
         <button class="btn ghost" id="joinBtn" style="width: 46%">Join</button>
       </div>
+      <button class="btn ghost" id="tvBtn">Use this screen as the table (TV)</button>
+      <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.82rem; margin-top: -4px">For a TV or laptop everyone can see. It shows the table; everyone plays on their phones.</div>
       <div class="err" id="homeErr"></div>
     </div>
     <p style="text-align: center; margin-top: 18px"><a href="undertow-help.html" target="_blank" rel="noopener" style="color: var(--gold); font-weight: 800; text-decoration: none">How to play</a></p>
@@ -209,7 +351,7 @@
       <div class="plist" id="lobbyList"></div>
     </div>
     <div class="card-ui stack" id="hostBox">
-      <label class="toggle"><input type="checkbox" id="optPreview" checked> Show the “if you play this” preview</label>
+      <label class="toggle" id="optPreviewRow"><input type="checkbox" id="optPreview" checked> Show the “if you play this” preview</label>
       <label class="toggle"><input type="checkbox" id="optCross" checked> Cross out played cards on the gangplank</label>
       <button class="btn" id="startBtn">Set sail</button>
       <div style="color: var(--muted); font-weight: 700; text-align: center; font-size: 0.85rem" id="startHint"></div>
@@ -225,9 +367,11 @@
     <span class="t1">UNDERTOW</span>
     <span class="t2" id="gRound"></span>
     <span class="sp"></span>
+    <button class="pill mutebtn short" onclick="toggleMute()">🔊</button>
     <button class="pill" id="scoresBtn">Scores</button>
   </div>
   <div class="opps" id="opps"></div>
+  <div class="tvnote">Watch the big screen · your hand is below</div>
   <div class="table" id="table">
     <div class="trick" id="trick"></div>
     <div class="bars" id="bars"></div>
@@ -242,6 +386,49 @@
     <div class="opp" id="meSeat" style="flex-direction: row; gap: 8px; padding: 4px 8px"></div>
     <button class="btn" id="playBtn" disabled>Choose a card</button>
   </div>
+</div>
+
+<!-- ============ TV: LOBBY ============ -->
+<div class="view hidden" id="vTVLobby">
+  <div class="tvsea"><div class="glint"></div><div class="wave"></div><div class="wave w2"></div><div class="wave w3"></div></div>
+  <button class="pill mutebtn tvmute" onclick="toggleMute()">Sound on</button>
+  <div class="tvlobby">
+    <div class="tvl-left">
+      <h1 class="logo tvlogo">UNDERTOW</h1>
+      <div class="tvurl">Scan to join on your phone</div>
+      <div class="qr big" id="tvQr"></div>
+      <div class="tvurl" id="tvUrl"></div>
+      <span class="lbl" style="margin: 1vh 0 0">Room code</span>
+      <div class="code tvcode" id="tvCode">----</div>
+    </div>
+    <div class="tvl-right card-ui">
+      <span class="lbl" style="margin: 0" id="tvCount">Sailors</span>
+      <div class="tvplist" id="tvPlist"></div>
+      <label class="toggle"><input type="checkbox" id="tvCross" checked> Cross out played cards (gangplank and ship's log)</label>
+      <button class="btn" id="tvStart">Set sail</button>
+      <div style="color: var(--muted); font-weight: 700; text-align: center" id="tvHint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TV: GAME ============ -->
+<div class="view hidden" id="vTVGame">
+  <div class="tvsea"><div class="glint"></div><div class="wave"></div><div class="wave w2"></div><div class="wave w3"></div></div>
+  <div class="tvtop"><span class="t1">UNDERTOW</span><span class="t2" id="tvRound"></span><span class="sp"></span><span class="t2">Room <b id="tvCode2"></b></span><button class="pill mutebtn" onclick="toggleMute()">Sound on</button></div>
+  <div class="tvmain">
+    <div class="tvtable" id="tvTable">
+      <div class="oval"></div>
+      <div id="tvSeats"></div>
+      <div class="tvcenter" id="tvCenter"><div class="trick" id="tvTrick"></div><div class="bars" id="tvBars"></div><div class="status" id="tvStatus"></div></div>
+      <svg class="arrowlayer" id="tvArrow"></svg>
+    </div>
+    <div class="tvside">
+      <div class="card-ui"><span class="lbl">The fleet</span><div id="tvFleet"></div></div>
+      <div class="card-ui" id="tvLogBox"><span class="lbl">Ship's log · played this round</span><div id="tvLog"></div></div>
+    </div>
+  </div>
+  <div id="tvFly"></div>
+  <div id="tvOverlay"></div>
 </div>
 
 <div id="sheetHost"></div>
@@ -281,7 +468,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -318,15 +505,15 @@ function legalCards(hand, trick, mustLead) {
 const ORD = k => k + (["th", "st", "nd", "rd"][(k % 100 - 20) % 10] || ["th", "st", "nd", "rd"][k % 100] || "th");
 // e.g. "6th of 8 in Glacier"; counted from the lowest card, so the Captain is always the top
 function rankText(n) { const s = suitOf(n); return isCaptain(n) ? `Captain of ${s.name}` : `${ORD(n - s.lo + 1)} of ${s.hi - s.lo + 1} in ${s.name}`; }
-function cardHTML(n, extra = "") {
+function cardHTML(n, extra = "", inner = "") {
   const s = suitOf(n), cap = isCaptain(n);
   const dots = cap ? "" : `<span class="dots">${Array.from({ length: s.hi - s.lo + 1 }, (_, i) => `<i class="${i === n - s.lo ? "me" : ""}"></i>`).join("")}</span>`;
-  return `<div class="pc ${cap ? "cap" : ""} ${extra}" style="--c:${s.col};--k:${s.ink}"><img src="${s.img}" alt="" style="object-position:${s.pos}" draggable="false"><b class="num">${n}</b>${dots}<span class="nm">${s.name}</span></div>`;
+  return `<div class="pc ${cap ? "cap" : ""} ${extra}" style="--c:${s.col};--k:${s.ink}"><img src="${s.img}" alt="" style="object-position:${s.pos}" draggable="false"><b class="num">${n}</b>${dots}<span class="nm">${s.name}</span>${inner}</div>`;
 }
 const avatar = (p, size) => `<span class="av" style="width:${size}px;height:${size}px;font-size:${Math.round(size * 0.4)}px;background:${p.color || "#8EC4F7"}">${esc((p.name || "?").slice(0, 2).toUpperCase())}</span>`;
 
 // ---------- session ----------
-let uid = null, code = null, room = null, roomRef = null, isHost = false, myHand = [], handRef = null;
+let uid = null, code = null, room = null, roomRef = null, isHost = false, isTV = false, myHand = [], handRef = null;
 let selColor = load("undertow.color") || COLORS[Math.floor(Math.random() * COLORS.length)];
 const qs = new URLSearchParams(location.search);
 $("nameIn").value = load("undertow.name") || "";
@@ -334,7 +521,7 @@ if (qs.get("room")) $("codeIn").value = qs.get("room").toUpperCase();
 function drawSwatches() { $("swatches").innerHTML = COLORS.map(c => `<button class="sw ${c === selColor ? "sel" : ""}" style="background:${c}" aria-label="Colour ${c}" onclick="pickColor('${c}')"></button>`).join(""); }
 function pickColor(c) { selColor = c; store("undertow.color", c); drawSwatches(); }
 drawSwatches();
-function show(v) { ["vHome", "vLobby", "vGame"].forEach(id => $(id).classList.toggle("hidden", id !== v)); }
+function show(v) { ["vHome", "vLobby", "vGame", "vTVLobby", "vTVGame"].forEach(id => $(id).classList.toggle("hidden", id !== v)); }
 function myName() { const n = $("nameIn").value.trim(); if (!n) { $("homeErr").textContent = "Pop your name in first"; return null; } store("undertow.name", n); return n; }
 
 auth.onAuthStateChanged(u => { if (u) { uid = u.uid; checkRejoin(); } });
@@ -344,25 +531,38 @@ function checkRejoin() {
   const last = load("undertow.last");
   if (!last || !last.code) return;
   if (qs.get("room") && qs.get("room").toUpperCase() === last.code) return enterRoom(last.code);
-  db.ref(`rooms/${last.code}/pub/players/${uid}`).once("value").then(s => {
-    if (!s.exists()) return;
+  Promise.all([db.ref(`rooms/${last.code}/pub/players/${uid}`).once("value"), db.ref(`rooms/${last.code}/pub/hostUid`).once("value")]).then(([pl, hu]) => {
+    const asTV = hu.val() === uid && !pl.exists();
+    if (!pl.exists() && !asTV) return;
     $("rejoinBox").classList.remove("hidden");
-    $("rejoinBox").innerHTML = `<div class="row" style="background:rgba(242,193,78,0.12);border-radius:12px;padding:10px"><div style="flex:1;font-weight:700">You were in game <b>${esc(last.code)}</b></div><button class="btn small" onclick="enterRoom('${esc(last.code)}')">Rejoin</button></div>`;
+    $("rejoinBox").innerHTML = `<div class="row" style="background:rgba(242,193,78,0.12);border-radius:12px;padding:10px"><div style="flex:1;font-weight:700">You were in game <b>${esc(last.code)}</b>${asTV ? " as the table screen" : ""}</div><button class="btn small" onclick="enterRoom('${esc(last.code)}')">Rejoin</button></div>`;
   });
 }
-$("createBtn").onclick = async () => {
-  const name = myName(); if (!name || !uid) return;
-  $("createBtn").disabled = true;
+async function newRoom(pub) {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   for (let tries = 0; tries < 8; tries++) {
     const c = Array.from({ length: 4 }, () => letters[Math.floor(Math.random() * letters.length)]).join("");
     const ex = await db.ref(`rooms/${c}/pub/hostUid`).once("value");
     if (ex.exists()) continue;
-    await db.ref(`rooms/${c}/pub`).set({ hostUid: uid, ver: APP_VERSION, created: TS, settings: { preview: true, cross: true }, state: { phase: "lobby", seq: 0 }, players: { [uid]: { name, color: selColor, joinedAt: TS, online: true } } });
-    $("createBtn").disabled = false;
-    return enterRoom(c);
+    await db.ref(`rooms/${c}/pub`).set(Object.assign({ hostUid: uid, ver: APP_VERSION, created: TS, state: { phase: "lobby", seq: 0, at: TS } }, pub));
+    return c;
   }
-  $("createBtn").disabled = false; $("homeErr").textContent = "Couldn't create a room, try again";
+  return null;
+}
+$("createBtn").onclick = async () => {
+  const name = myName(); if (!name || !uid) return;
+  $("createBtn").disabled = true;
+  const c = await newRoom({ settings: { preview: true, cross: true }, players: { [uid]: { name, color: selColor, joinedAt: TS, online: true } } });
+  $("createBtn").disabled = false;
+  if (c) enterRoom(c); else $("homeErr").textContent = "Couldn't create a room, try again";
+};
+// this device becomes the shared table: no hand, it runs the game and shows everything public
+$("tvBtn").onclick = async () => {
+  if (!uid) return;
+  $("tvBtn").disabled = true; unlockAudio();
+  const c = await newRoom({ tv: true, settings: { preview: false, cross: true } });
+  $("tvBtn").disabled = false;
+  if (c) enterRoom(c); else $("homeErr").textContent = "Couldn't create a room, try again";
 };
 $("joinBtn").onclick = async () => {
   const name = myName(); if (!name || !uid) return;
@@ -381,13 +581,16 @@ function enterRoom(c) {
   code = c; store("undertow.last", { code: c });
   history.replaceState(null, "", location.pathname + "?room=" + c);
   roomRef = db.ref(`rooms/${c}/pub`);
-  const meRef = db.ref(`rooms/${c}/pub/players/${uid}/online`);
-  db.ref(".info/connected").on("value", s => { if (s.val()) { meRef.onDisconnect().set(false); meRef.set(true); } });
+  let presence = false;
   roomRef.on("value", s => {
     room = s.val();
     if (!room) { toast("That game has ended"); return leaveRoom(true); }
-    if (!(room.players || {})[uid]) { toast("You're not in this game"); return leaveRoom(true); }
-    isHost = room.hostUid === uid;
+    const amPlayer = !!(room.players || {})[uid];
+    if (!amPlayer && room.hostUid !== uid) { toast("You're not in this game"); return leaveRoom(true); }
+    // online/away presence, for players only (the table screen isn't a player)
+    if (amPlayer && !presence) { presence = true; const meRef = db.ref(`rooms/${c}/pub/players/${uid}/online`); db.ref(".info/connected").on("value", x => { if (x.val()) { meRef.onDisconnect().set(false); meRef.set(true); } }); }
+    isHost = room.hostUid === uid; isTV = !!room.tv && isHost;
+    document.body.classList.toggle("tv", isTV); document.body.classList.toggle("tvmode", !!room.tv && !isTV);
     if ((room.ver || 0) > APP_VERSION) return needUpdate();
     render(); brainTick();
   });
@@ -397,7 +600,7 @@ function enterRoom(c) {
 function leaveRoom(silent) {
   if (roomRef) roomRef.off(); if (handRef) handRef.off();
   if (!silent && room && room.state && room.state.phase === "lobby" && code) db.ref(`rooms/${code}/pub/players/${uid}`).remove();
-  store("undertow.last", null); room = null; code = null;
+  store("undertow.last", null); room = null; code = null; isTV = false; document.body.classList.remove("tv", "tvmode");
   history.replaceState(null, "", location.pathname); show("vHome");
 }
 $("leaveBtn").onclick = () => leaveRoom(false);
@@ -417,6 +620,10 @@ const trickOf = s => (s.trick || []).filter(Boolean);
 // every card played this round, including the current trick (Firebase may hand arrays back as objects)
 const playedOf = s => (Array.isArray(s.played) ? s.played : Object.values(s.played || {})).filter(v => v != null);
 const scores = () => room.scores || {};
+// with a TV, the first sailor to join is the lead: their phone can start games and deal (as a request the TV carries out)
+const lead = () => order()[0];
+const isLead = () => !!room.tv && lead() === uid;
+function sendCmd(cmd, extra) { return db.ref(`rooms/${code}/pub/moves/${uid}`).set(Object.assign({ cmd, t: TS }, extra || {})); }
 
 // ---------- HOST: runs the rules ----------
 let brainT = null, brainKey = null;
@@ -425,6 +632,7 @@ function brainTick() {
   if (!isHost || !room || !room.state) return;
   const s = room.state, key = s.phase + ":" + s.seq;
   if (key !== brainKey) { clearTimeout(brainT); brainKey = key; }
+  brainCmds(s);
   if (s.phase === "play") {
     const mv = (room.moves || {})[s.turn];
     if (mv && mv.seq === s.seq && mv.card != null) { clearTimeout(brainT); return applyPlay(s, s.turn, mv.card); }
@@ -439,7 +647,20 @@ function brainTick() {
     clearTimeout(brainT);
     const p = players()[s.res.winner];
     if (p && p.online === false) brainT = setTimeout(() => { if (room.state.seq === s.seq) startTrick(room.state, nextSeat(s.res.winner)); }, AUTO_MS);
+  } else if (s.phase === "roundEnd" && room.tv) {
+    clearTimeout(brainT); brainT = setTimeout(() => { if (room.state.phase === "roundEnd" && room.state.seq === s.seq) deal(); }, Math.max(50, s.at + NEXT_MS - serverNow()));
   }
+}
+const handledCmds = new Set();
+function brainCmds(s) {
+  if (!room.tv) return;
+  const mv = (room.moves || {})[lead()];
+  if (!mv || !mv.cmd || !(mv.t > (s.at || 0))) return;
+  const k = mv.cmd + ":" + mv.t; if (handledCmds.has(k)) return; handledCmds.add(k);
+  if (mv.cmd === "set" && s.phase === "lobby") roomRef.child("settings/cross").set(!!mv.cross);
+  else if (mv.cmd === "start" && s.phase === "lobby") startGame();
+  else if (mv.cmd === "deal" && s.phase === "roundEnd") deal();
+  else if (mv.cmd === "again" && s.phase === "gameOver") backToLobby();
 }
 function applyPlay(s, p, card) {
   if (room.state.seq !== s.seq) return;
@@ -468,7 +689,12 @@ function endRound(s, taken) {
   upd.state = Object.assign({}, s, { phase: over ? "gameOver" : "roundEnd", taken, seq: s.seq + 1, at: TS, trick: null, turn: null });
   roomRef.update(upd);
 }
+let dealing = false;
 async function deal() {
+  if (dealing) return; dealing = true;
+  try { await dealNow(); } finally { dealing = false; }
+}
+async function dealNow() {
   const s = room.state, o = order(), n = o.length, deck = shuffle(deckFor(n)), per = deck.length / n, fc = firstCard(n);
   const upd = {}; let leader = o[0];
   o.forEach((id, i) => { const h = deck.slice(i * per, (i + 1) * per).sort((a, b) => a - b); if (h.includes(fc)) leader = id; upd[`rooms/${code}/hands/${id}`] = h; });
@@ -484,15 +710,27 @@ async function autoPlay(seq) {
   applyPlay(s, p, card);
   toast(`${nameOf(p)} is away, so a card was played for them`);
 }
+let starting = false;
+async function startGame() {
+  const n = Object.keys(players()).length; if (n < MIN_P || n > MAX_P || starting) return;
+  starting = true;
+  try {
+    await roomRef.update({ scores: null, log: null, moves: null, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, at: room.state.at || 0, order: Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0)), round: 0 } });
+    await deal();
+  } finally { starting = false; }
+}
 $("startBtn").onclick = async () => {
   const n = Object.keys(players()).length; if (n < MIN_P || n > MAX_P) return;
+  if (isLead()) { $("startBtn").disabled = true; await sendCmd("start"); return; }
+  if (!isHost) return;
   $("startBtn").disabled = true;
-  await roomRef.update({ scores: null, log: null, moves: null, settings: { preview: $("optPreview").checked, cross: $("optCross").checked }, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, order: Object.keys(players()).sort((a, b) => (players()[a].joinedAt || 0) - (players()[b].joinedAt || 0)), round: 0 } });
-  await deal();
+  await roomRef.child("settings").set({ preview: $("optPreview").checked, cross: $("optCross").checked });
+  await startGame();
   $("startBtn").disabled = false;
 };
-function nextRound() { if (isHost && room.state.phase === "roundEnd") deal(); }
-function backToLobby() { if (!isHost) return; closeSheet(); roomRef.update({ scores: null, log: null, moves: null, state: { phase: "lobby", seq: (room.state.seq || 0) + 1 } }); Object.keys(players()).forEach(id => db.ref(`rooms/${code}/hands/${id}`).remove()); }
+$("optCross").onchange = () => { if (isLead()) sendCmd("set", { cross: $("optCross").checked }); };
+function nextRound() { if (room.state.phase !== "roundEnd") return; if (isHost) deal(); else if (isLead()) sendCmd("deal"); }
+function backToLobby() { if (!isHost) { if (isLead() && room.state.phase === "gameOver") sendCmd("again"); return; } closeSheet(); roomRef.update({ scores: null, log: null, moves: null, state: { phase: "lobby", seq: (room.state.seq || 0) + 1, at: TS } }); Object.keys(players()).forEach(id => db.ref(`rooms/${code}/hands/${id}`).remove()); }
 
 // ---------- PLAYER actions ----------
 let selCard = null;
@@ -524,13 +762,19 @@ $("hand").addEventListener("click", e => {
 function chooseLeader(id) { const s = room.state; if (s.phase !== "captain" || s.res.winner !== uid) return; db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, lead: id }); closeSheet(); }
 
 // ---------- RENDER ----------
-let lastPhase = null, lastTrickLen = 0, lastRound = null;
+let lastPhase = null, lastTrickLen = 0, lastRound = null, wasMyTurn = false;
+const PV = () => ({ tEl: $("trick"), bars: $("bars"), st: $("status"), host: $("table"), seat: id => document.querySelector(`#opps .opp[data-seat="${id}"]`) || (id === uid ? $("meSeat") : null), me: uid });
+const TVV = () => ({ tEl: $("tvTrick"), bars: $("tvBars"), st: $("tvStatus"), host: $("tvCenter"), seat: seatEl, me: null });
 function render() {
   if (!room || !room.state) return;
+  if (isTV) return renderTV();
   const s = room.state;
-  if (s.phase === "lobby") { show("vLobby"); closeSheet(); return renderLobby(); }
+  if (s.phase === "lobby") { show("vLobby"); closeSheet(); wasMyTurn = false; return renderLobby(); }
   show("vGame");
-  renderTop(s); renderSeats(s); renderTable(s); renderHand(); renderPreview(); renderGang();
+  renderTop(s); renderSeats(s); renderTable(s, PV()); renderHand(); renderPreview(); renderGang();
+  const myTurn = s.phase === "play" && s.turn === uid;
+  if (myTurn && !wasMyTurn) { sfx("turn"); if (navigator.vibrate) navigator.vibrate(room.tv ? [40, 60, 40] : 30); }
+  wasMyTurn = myTurn;
   if (s.phase === "captain") { if (s.res.winner === uid) openCaptain(s); else closeSheet("cap"); }
   else if (s.phase === "roundEnd" || s.phase === "gameOver") openScores(s, true);
   else if (lastPhase === "roundEnd" || lastPhase === "gameOver" || lastPhase === "captain") closeSheet();
@@ -542,22 +786,27 @@ function renderLobby() {
   if ($("qr").dataset.u !== url) { $("qr").dataset.u = url; $("qr").innerHTML = ""; try { new QRCode($("qr"), { text: url, width: 136, height: 136, colorDark: "#0b1a2e", colorLight: "#ffffff" }); } catch (e) {} }
   const ids = order(), n = ids.length;
   $("lobbyCount").textContent = `Sailors · ${n} of 6`;
-  $("lobbyList").innerHTML = ids.map(id => { const p = players()[id]; return `<div class="prow">${avatar(p, 34)}<span>${esc(p.name)}${id === uid ? " (you)" : ""}</span>${id === room.hostUid ? '<span class="host">HOST</span>' : ""}${p.online === false ? '<span class="host" style="color:var(--red)">AWAY</span>' : ""}</div>`; }).join("");
-  $("hostBox").classList.toggle("hidden", !isHost); $("guestBox").classList.toggle("hidden", isHost);
+  $("lobbyList").innerHTML = ids.map(id => { const p = players()[id]; return `<div class="prow">${avatar(p, 34)}<span>${esc(p.name)}${id === uid ? " (you)" : ""}</span>${(room.tv ? id === ids[0] : id === room.hostUid) ? `<span class="host">${room.tv ? "LEAD" : "HOST"}</span>` : ""}${p.online === false ? '<span class="host" style="color:var(--red)">AWAY</span>' : ""}</div>`; }).join("");
+  const ctl = isHost || isLead();
+  $("hostBox").classList.toggle("hidden", !ctl); $("guestBox").classList.toggle("hidden", ctl);
+  $("guestBox").textContent = room.tv ? `Waiting for ${n ? nameOf(ids[0]) : "the lead"} or the table screen to set sail…` : "Waiting for the host to set sail…";
+  if (room.tv && document.activeElement !== $("optCross")) $("optCross").checked = !room.settings || room.settings.cross !== false;
   $("startBtn").disabled = n < MIN_P || n > MAX_P;
-  $("startHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points`;
+  if (room.tv && n >= MIN_P) $("startBtn").disabled = false;
+  $("startHint").textContent = room.tv && n >= MIN_P ? `${n} sailors · watch the table screen once you set sail` : n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points`;
 }
 function renderTop(s) {
-  $("gRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)} of ${s.perHand}`;
+  $("gRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)}/${s.perHand}`;
 }
+const phonePrevTaken = {};
 function seatHTML(id, s, mine) {
-  const p = players()[id] || { name: "?" }, taken = (s.taken || {})[id] || 0, played = trickOf(s).some(t => t.p === id) ? 1 : 0;
-  const left = s.phase === "play" ? s.perHand - (s.trickNo - 1) - played : Math.max(0, s.perHand - s.trickNo);
+  const p = players()[id] || { name: "?" }, taken = (s.taken || {})[id] || 0, left = leftOf(id, s);
+  const grew = phonePrevTaken[id] != null && taken > phonePrevTaken[id]; phonePrevTaken[id] = taken;
   const turn = (s.phase === "play" && s.turn === id) || (s.phase === "captain" && s.res && s.res.winner === id);
   return `<div class="opp ${turn ? "turn" : ""}" data-seat="${id}">
       <div class="avwrap">${avatar(p, mine ? 34 : 42)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
-      ${mine ? `<div style="display:flex;flex-direction:column"><span class="nm">You</span><span class="meta">${taken} taken · ${(scores()[id] || 0)} pts</span></div>` :
-      `<span class="nm">${esc(p.name)}</span><span class="meta">${left} card${left === 1 ? "" : "s"} · ${taken} taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
+      ${mine ? `<div style="display:flex;flex-direction:column"><span class="nm">You</span><span class="meta"><b class="${grew ? "bump" : ""}" style="font-weight:800">${taken}</b> taken · ${(scores()[id] || 0)} pts</span></div>` :
+      `<span class="nm">${esc(p.name)}</span><span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
     </div>`;
 }
 function renderSeats(s) {
@@ -565,69 +814,85 @@ function renderSeats(s) {
   $("opps").innerHTML = others.map(id => seatHTML(id, s, false)).join("");
   $("meSeat").outerHTML = seatHTML(uid, s, true).replace('class="opp', 'id="meSeat" style="flex-direction:row;gap:8px;padding:4px 8px" class="opp');
 }
-function renderTable(s) {
-  const trick = trickOf(s), tEl = $("trick");
+function renderTable(s, V) {
+  const trick = trickOf(s), tEl = V.tEl, me = V.me, who = id => id === me ? "You" : esc(nameOf(id));
   const live = trick.length ? resolve(trick) : null;
   const sweeping = s.phase === "trickEnd" && serverNow() - s.at > TRICK_MS - 900;
   const animateFrom = (lastRound === s.round && trick.length === lastTrickLen + 1) ? trick.length - 1 : -1;
   const tKey = s.round + "|" + s.trickNo + "|" + s.phase + "|" + trick.map(t => t.c).join(",") + "|" + (s.turn || "");
   const same = tEl.dataset.key === tKey; tEl.dataset.key = tKey;
+  const centre = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width ? [r.left + r.width / 2, r.top + r.height / 2] : null; };
   if (same) {} else if (trick.length) {
     tEl.innerHTML = trick.map((t, i) => {
-      const seat = document.querySelector(`.opp[data-seat="${t.p}"]`) || $("meSeat");
       let fx = 0, fy = -80;
-      if (seat && i === animateFrom) { const a = seat.getBoundingClientRect(), b = tEl.getBoundingClientRect(); fx = (a.left + a.width / 2) - (b.left + b.width / 2); fy = (a.top + a.height / 2) - (b.top + b.height / 2); }
-      return `<div class="tslot ${i === animateFrom ? "fly" : ""} ${live && live.winner === t.p ? "win" : ""}" style="--fx:${fx}px;--fy:${fy}px">${cardHTML(t.c)}<span class="who">${t.p === uid ? "You" : esc(nameOf(t.p))}</span></div>`;
+      const a = i === animateFrom ? centre(V.seat(t.p)) : null;
+      if (a) { const b = tEl.getBoundingClientRect(); fx = a[0] - (b.left + b.width / 2); fy = a[1] - (b.top + b.height / 2); }
+      return `<div class="tslot ${i === animateFrom ? "fly" : ""} ${live && live.winner === t.p ? "win" : ""}" style="--fx:${fx}px;--fy:${fy}px">${cardHTML(t.c, "", i === animateFrom ? '<i class="back-face"></i>' : "")}<span class="who">${who(t.p)}</span></div>`;
     }).join("");
+    if (animateFrom >= 0) setTimeout(() => sfx("snap"), reduceMotion ? 0 : 380);
   } else {
-    const lead = s.phase === "play" ? s.turn : null;
-    tEl.innerHTML = `<div class="empty">${lead === uid ? "You lead this trick" : lead ? esc(nameOf(lead)) + " leads this trick" : ""}</div>`;
+    const ld = s.phase === "play" ? s.turn : null;
+    tEl.innerHTML = `<div class="empty">${ld && ld === me ? "You lead this trick" : ld ? esc(nameOf(ld)) + " leads this trick" : ""}</div>`;
   }
-  if (!same) tEl.classList.remove("sweep");
+  if (!same) { tEl.classList.remove("sweep"); tEl.classList.toggle("ended", s.phase === "trickEnd"); }
   if (s.phase === "trickEnd" && !same) {
-    const w = document.querySelector(`.opp[data-seat="${s.res.winner}"]`) || $("meSeat");
-    const go = () => { const a = w.getBoundingClientRect(), b = tEl.getBoundingClientRect(); tEl.style.setProperty("--sx", ((a.left + a.width / 2) - (b.left + b.width / 2)) + "px"); tEl.style.setProperty("--sy", ((a.top + a.height / 2) - (b.top + b.height / 2)) + "px"); tEl.classList.add("sweep"); };
+    const go = () => {
+      const a = centre(V.seat(s.res.winner)), b = tEl.getBoundingClientRect();
+      tEl.style.setProperty("--sx", (a ? a[0] - (b.left + b.width / 2) : 0) + "px"); tEl.style.setProperty("--sy", (a ? a[1] - (b.top + b.height / 2) : -200) + "px");
+      tEl.classList.add("sweep"); sfx("sweep");
+    };
     if (sweeping) go(); else { clearTimeout(window.__sweepT); window.__sweepT = setTimeout(() => { if (room && room.state.phase === "trickEnd" && room.state.seq === s.seq) go(); }, Math.max(0, s.at + TRICK_MS - 900 - serverNow())); }
   }
   lastTrickLen = trick.length; lastRound = s.round;
   // suit counts
   const counts = live ? live.counts : {};
-  if (!same) $("bars").innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(k => { const su = SUITS.find(x => x.k === k); return `<div class="bar"><span class="lab" style="color:${su.col}">${su.name}</span><span class="segs">${Array.from({ length: counts[k] }, () => `<span class="seg" style="background:${su.col}"></span>`).join("")}</span></div>`; }).join("");
+  if (!same) V.bars.innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(k => { const su = SUITS.find(x => x.k === k); return `<div class="bar"><span class="lab" style="color:${su.col}">${su.name}</span><span class="segs">${Array.from({ length: counts[k] }, () => `<span class="seg" style="background:${su.col}"></span>`).join("")}</span></div>`; }).join("");
   // status line and result banner
-  const st = $("status"); st.classList.remove("mine");
-  document.querySelectorAll("#table .banner").forEach(b => { if (b.dataset.seq !== String(s.seq)) b.remove(); });
+  const st = V.st; st.classList.remove("mine");
+  V.host.querySelectorAll(".banner").forEach(b => { if (b.dataset.seq !== String(s.seq)) b.remove(); });
   if (s.phase === "play") {
-    if (s.turn === uid) {
+    if (me && s.turn === me) {
       st.classList.add("mine");
       const lc = legalCards(myHand, trick, s.first);
       st.textContent = !trick.length ? (s.first != null && myHand.includes(s.first) ? `Your lead: you must open with the ${s.first}` : "Your lead: play any card") : lc.length === myHand.length && !myHand.some(c => new Set(trick.map(t => suitOf(t.c).k)).has(suitOf(c).k)) ? "Your turn: no match, so play anything" : "Your turn: match a suit already on the table";
-    } else st.textContent = `Waiting for ${nameOf(s.turn)}…`;
-    if (s.res && s.res.picked && s.trickNo > 1 && !trick.length) st.textContent = `${s.res.pickedBy === uid ? "You" : nameOf(s.res.pickedBy)} sent ${s.res.picked === uid ? "you" : nameOf(s.res.picked)} to lead` + (s.turn === uid ? ". Your lead: play any card" : "");
+    } else st.textContent = me ? `Waiting for ${nameOf(s.turn)}…` : `${nameOf(s.turn)}'s turn` + (s.first != null && !trick.length ? ` · opening with the ${s.first}` : "");
+    if (s.res && s.res.picked && s.trickNo > 1 && !trick.length) st.textContent = `${who(s.res.pickedBy)} sent ${s.res.picked === me ? "you" : esc(nameOf(s.res.picked))} to lead` + (me && s.turn === me ? ". Your lead: play any card" : "");
   } else if (s.phase === "trickEnd") {
     st.textContent = "";
-    if (!document.querySelector(`#table .banner[data-seq="${s.seq}"]`)) {
+    if (!V.host.querySelector(`.banner[data-seq="${s.seq}"]`)) {
       const r = s.res, su = SUITS.find(x => x.k === suitOf(r.card).k), counts2 = Object.values(r.counts).sort((a, b) => b - a);
       const why = r.tied.length > 1 ? `${r.tied.map(k => SUITS.find(x => x.k === k).name).join(" and ")} tie at ${r.most}, highest card wins.` : Object.keys(r.counts).length > 1 ? `${su.name} has the most cards (${counts2.join(" vs ")}).` : `All ${su.name}.`;
       const b = document.createElement("div"); b.className = "banner"; b.dataset.seq = s.seq;
-      b.innerHTML = `${why}<br><span style="color:var(--gold)">${r.winner === uid ? "You take" : esc(nameOf(r.winner)) + " takes"} the trick with the ${r.card}.</span>${r.cap ? '<br><span class="cap">Captain\'s card! ' + (r.winner === uid ? "You choose" : esc(nameOf(r.winner)) + " chooses") + " who leads next</span>" : ""}`;
-      $("table").appendChild(b);
-      if (r.winner === uid && navigator.vibrate) navigator.vibrate([30, 40, 30]);
+      b.innerHTML = `${why}<br><span style="color:var(--gold)">${r.winner === me ? "You take" : esc(nameOf(r.winner)) + " takes"} the trick with the ${r.card}.</span>${r.cap ? '<br><span class="cap">Captain\'s card! ' + (r.winner === me ? "You choose" : esc(nameOf(r.winner)) + " chooses") + " who leads next</span>" : ""}`;
+      V.host.appendChild(b);
+      if (r.cap) setTimeout(() => sfx("captain"), 250);
+      if (me && r.winner === me && navigator.vibrate) navigator.vibrate([30, 40, 30]);
     }
-  } else if (s.phase === "captain") st.textContent = s.res.winner === uid ? "Choose who leads next" : `${nameOf(s.res.winner)} is choosing who leads next…`;
+  } else if (s.phase === "captain") st.textContent = s.res.winner === me ? "Choose who leads next" : `${nameOf(s.res.winner)} is choosing who leads next…`;
   else st.textContent = "";
 }
 function renderHand() {
+  if (!room || !room.state || room.state.phase === "lobby") return;
   const s = room.state, h = $("hand"), myTurn = s.phase === "play" && s.turn === uid;
   const legal = myTurn ? legalCards(myHand, trickOf(s), s.first) : [];
   if (selCard != null && !myHand.includes(selCard)) selCard = null;
-  const n = myHand.length, W = (h.parentElement.clientWidth || 360) - 12, cw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--cw")) || 62;
+  const n = myHand.length, W = (h.parentElement.clientWidth || 360) - 12, cw = parseFloat(getComputedStyle(h).getPropertyValue("--cw")) || 62;
+  const hKey = [myHand.join(","), selCard, myTurn, legal.join(","), W, cw].join("|");
+  let deal = false;
+  if (s.phase === "play" && s.trickNo === 1 && !trickOf(s).length && n === s.perHand && handDealt !== s.round) { handDealt = s.round; deal = !reduceMotion; sfx("deal"); }
+  if (h.dataset.key === hKey && !deal) return paintPlayBtn(s, myTurn);
+  h.dataset.key = hKey;
   const step = n > 1 ? Math.min(cw * 0.92, (W - cw - 8) / (n - 1)) : 0, total = step * (n - 1) + cw;
   h.style.width = total + "px"; h.dataset.step = step; h.dataset.cw = cw;
   h.innerHTML = myHand.map((c, i) => {
     const off = i - (n - 1) / 2, rot = n > 1 ? off * Math.min(2, 16 / n) : 0;
     const cls = c === selCard ? "sel" : !myTurn ? "" : legal.includes(c) ? "ok" : "ill";
-    return `<button class="hcard ${cls}" data-c="${c}" style="left:${i * step}px;rotate:${rot}deg;z-index:${i + 1}" aria-label="${suitOf(c).name} ${c}${myTurn && !legal.includes(c) ? ", can't be played now" : ""}">${cardHTML(c)}</button>`;
+    return `<button class="hcard ${cls} ${deal ? "dealt" : ""}" data-c="${c}" style="--d:${(i * 0.06).toFixed(2)}s;left:${i * step}px;rotate:${rot}deg;z-index:${i + 1}" aria-label="${suitOf(c).name} ${c}${myTurn && !legal.includes(c) ? ", can't be played now" : ""}">${cardHTML(c)}</button>`;
   }).join("");
+  paintPlayBtn(s, myTurn);
+}
+let handDealt = null;
+function paintPlayBtn(s, myTurn) {
   const pb = $("playBtn");
   const ok = selCard != null && canPlay(selCard);
   pb.disabled = !ok;
@@ -659,32 +924,227 @@ function openCaptain(s) {
   const h = $("sheetHost"); if (h.dataset.kind === "cap" && h.dataset.seq === String(s.seq)) return;
   h.dataset.kind = "cap"; h.dataset.seq = s.seq;
   const o = order();
-  h.innerHTML = `<div class="sheet"><div class="box"><div style="display:flex;justify-content:center;margin-bottom:10px">${cardHTML(s.res.card).replace('class="pc', 'style="--w:110px" class="pc')}</div><h2>Captain's call</h2><div class="sub">You took the trick with a Captain. Pick who leads the next trick.</div>
+  if (navigator.vibrate) navigator.vibrate([20, 30, 20, 30, 60]);
+  h.innerHTML = `<div class="sheet"><div class="box" style="position:relative;overflow:hidden"><div style="position:relative;display:flex;justify-content:center;margin-bottom:10px"><div class="rays sm"></div><div class="caprise">${cardHTML(s.res.card, "", '<i class="sheen"></i>').replace('class="pc', 'style="--w:110px" class="pc')}</div></div><h2 style="position:relative">Captain's call</h2><div class="sub">You took the trick with a Captain. Pick who leads the next trick.</div>
     ${o.map(id => { const p = players()[id]; return `<button class="pickbtn" onclick="chooseLeader('${id}')">${avatar(p, 34)}<span>${id === uid ? "Me" : esc(p.name)}</span><span class="meta">${(s.taken || {})[id] || 0} taken this round</span></button>`; }).join("")}</div></div>`;
 }
 function openScores(s, auto) {
   const h = $("sheetHost"), key = s.phase + s.seq;
   if (auto && h.dataset.kind === "scores" && h.dataset.seq === key) return;
+  const fresh = auto && h.dataset.seq !== key;
   h.dataset.kind = "scores"; h.dataset.seq = auto ? key : "manual";
   const o = order(), sc = scores(), log = room.log || {}, lastR = log[s.round] || {}, sink = s.sinkAt || 15;
-  const rows = o.map(id => ({ id, tot: sc[id] || 0, d: lastR[id] || 0 })).sort((a, b) => a.tot - b.tot);
+  const ended = s.phase === "roundEnd" || s.phase === "gameOver";
+  const rows = o.map(id => ({ id, tot: sc[id] || 0, d: ended ? lastR[id] || 0 : 0 })).sort((a, b) => a.tot - b.tot);
   let place = 0, prev = null;
   const over = s.phase === "gameOver", best = rows.length ? rows[0].tot : 0;
-  const winners = rows.filter(r => r.tot === best).map(r => r.id);
+  const winners = rows.filter(r => r.tot === best).map(r => r.id), sunk = rows.filter(r => r.tot >= sink).map(r => r.id);
   const title = over ? (winners.includes(uid) ? (winners.length > 1 ? "You share the win!" : "You stayed afloat!") : `${winners.map(nameOf).join(" & ")} ${winners.length > 1 ? "win" : "wins"}!`) : auto ? `End of round ${s.round}` : "Scores";
-  const sub = over ? "Lowest score wins. Someone's ship went down." : `First ship to ${sink} points sinks and ends the game. Lowest score wins.`;
+  const sub = over ? `${sunk.map(id => id === uid ? "Your" : nameOf(id) + "'s").join(" & ")} ship went down. Lowest score wins.` : `First ship to ${sink} points sinks and ends the game. Lowest score wins.`;
+  const ctl = isHost || isLead(), anim = fresh && ended;
+  const waitRound = room.tv ? `Round ${s.round + 1} deals automatically in a few seconds…` : `Waiting for the host to deal round ${s.round + 1}…`;
   h.innerHTML = `<div class="sheet"><div class="box"><h2>${title}</h2><div class="sub">${sub}</div>
-    ${rows.map((r, i) => { if (r.tot !== prev) { place = i + 1; prev = r.tot; } const p = players()[r.id] || {}; return `<div class="srow ${i === 0 ? "leader" : ""}"><span class="place">${place}</span>${avatar(p, 30)}<span>${r.id === uid ? "You" : esc(p.name)}</span><span class="d">${s.phase === "roundEnd" || over ? "+" + r.d : ""}</span><span class="tot">${r.tot}</span><div class="sink"><div style="width:${Math.min(100, r.tot / sink * 100)}%"></div></div></div>`; }).join("")}
+    ${rows.map((r, i) => { if (r.tot !== prev) { place = i + 1; prev = r.tot; } const p = players()[r.id] || {}; const from = anim ? r.tot - r.d : r.tot;
+      return `<div class="srow ${i === 0 ? "leader" : ""}"><span class="place">${place}</span>${avatar(p, 30)}<span class="nm2">${r.id === uid ? "You" : esc(p.name)}</span>${shipHTML(from / sink, p.color, over && !anim ? (sunk.includes(r.id) ? "sunk" : winners.includes(r.id) ? "afloat" : "") : "").replace('class="shipg', `data-to="${Math.min(1, r.tot / sink).toFixed(3)}" ${sunk.includes(r.id) ? 'data-sunk="1"' : ""} ${winners.includes(r.id) ? 'data-win="1"' : ""} class="shipg`)}<span class="d">${ended ? "+" + r.d : ""}</span><span class="tot ${anim ? "cnt" : ""}" data-from="${from}" data-to="${r.tot}">${from}</span></div>`; }).join("")}
     <div style="margin-top:16px" class="stack">
-      ${s.phase === "roundEnd" ? (isHost ? `<button class="btn" onclick="nextRound()">Deal round ${s.round + 1}</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for the host to deal round ${s.round + 1}…</div>`) : ""}
-      ${over ? (isHost ? `<button class="btn" onclick="backToLobby()">Play again</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for the host…</div>`) : ""}
+      ${s.phase === "roundEnd" ? (ctl ? `<button class="btn" onclick="nextRound()">Deal round ${s.round + 1}${room.tv ? " now" : ""}</button>${room.tv ? `<div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem">Otherwise it deals automatically in a few seconds</div>` : ""}` : `<div style="text-align:center;color:var(--muted);font-weight:800">${waitRound}</div>`) : ""}
+      ${over ? (ctl ? `<button class="btn" onclick="backToLobby()">Play again</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for ${room.tv ? esc(nameOf(lead())) + " or the table screen" : "the host"}…</div>`) : ""}
       ${!auto ? `<button class="btn ghost" onclick="closeSheet()">Close</button>` : ""}
     </div></div></div>`;
-  if (over && auto && winners.includes(uid)) confetti();
+  if (anim) {
+    const box = h.querySelector(".box"); animateShips(box, over); setTimeout(() => tickCounts(box), 600);
+    if (over) { if (sunk.length) setTimeout(() => sfx("bell"), 1200); if (winners.includes(uid)) setTimeout(() => { sfx("fanfare"); confetti(); }, 2600); }
+  }
 }
 $("scoresBtn").onclick = () => openScores(room.state, false);
-function confetti() { for (let i = 0; i < 70; i++) { const c = document.createElement("div"); c.className = "confetti"; c.style.left = Math.random() * 100 + "vw"; c.style.background = ["#f2c14e", "#7fd3ff", "#ff8a7a", "#6fd39a"][i % 4]; c.style.animationDuration = 2 + Math.random() * 2 + "s"; c.style.animationDelay = Math.random() * 0.8 + "s"; document.body.appendChild(c); setTimeout(() => c.remove(), 5000); } }
-window.addEventListener("resize", () => { if (room && room.state && room.state.phase !== "lobby") renderHand(); });
+function confetti() { if (reduceMotion) return; for (let i = 0; i < 70; i++) { const c = document.createElement("div"); c.className = "confetti"; c.style.left = Math.random() * 100 + "vw"; c.style.background = ["#f2c14e", "#7fd3ff", "#ff8a7a", "#6fd39a"][i % 4]; c.style.animationDuration = 2 + Math.random() * 2 + "s"; c.style.animationDelay = Math.random() * 0.8 + "s"; document.body.appendChild(c); setTimeout(() => c.remove(), 5000); } }
+window.addEventListener("resize", () => { if (room && room.state && room.state.phase !== "lobby" && !isTV) renderHand(); });
+// ---------- sound: synthesised in the browser, no audio files ----------
+// with a TV, only the TV makes noise; without one, every device does
+let actx = null, muted = !!load("undertow.mute");
+const reduceMotion = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+const audioOn = () => !muted && !!actx && !!room && (isTV || !room.tv);
+function unlockAudio() { try { if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); } catch (e) {} }
+document.addEventListener("pointerdown", unlockAudio, { capture: true });
+document.addEventListener("keydown", unlockAudio, { capture: true });
+function tone(f, t0, dur, type, vol, f2) {
+  const o = actx.createOscillator(), g = actx.createGain(); o.type = type || "sine"; o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || 0.2, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(actx.destination); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function noise(t0, dur, f1, f2, vol, q) {
+  const len = Math.ceil(actx.sampleRate * dur), b = actx.createBuffer(1, len, actx.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+  const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = b; f.type = "bandpass"; f.Q.value = q || 1; f.frequency.setValueAtTime(f1, t0); f.frequency.exponentialRampToValueAtTime(f2, t0 + dur); g.gain.value = vol || 0.3;
+  src.connect(f).connect(g).connect(actx.destination); src.start(t0);
+}
+function sfx(name) {
+  if (!audioOn()) return;
+  const t = actx.currentTime;
+  try {
+    if (name === "snap") { noise(t, 0.09, 2400, 900, 0.5, 1.2); tone(180, t, 0.08, "triangle", 0.15, 90); }
+    else if (name === "sweep") noise(t, 0.6, 400, 3000, 0.28, 0.7);
+    else if (name === "deal") for (let i = 0; i < 8; i++) noise(t + i * 0.06, 0.05, 3000, 1500, 0.18, 1.5);
+    else if (name === "turn") { tone(660, t, 0.25, "sine", 0.12); tone(990, t + 0.12, 0.35, "sine", 0.1); }
+    else if (name === "captain") [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.12, i === 3 ? 0.9 : 0.25, "triangle", 0.16));
+    else if (name === "tally") tone(880, t, 0.08, "square", 0.04);
+    else if (name === "bell") [0, 1.1].forEach(d => [440, 1106, 1760].forEach((f, i) => tone(f, t + d, 2.2, "sine", [0.22, 0.08, 0.05][i])));
+    else if (name === "fanfare") [[392, 0], [523, 0.15], [659, 0.3], [784, 0.45], [659, 0.65], [784, 0.8]].forEach(([f, d]) => tone(f, t + d, d === 0.8 ? 1 : 0.2, "square", 0.06));
+  } catch (e) {}
+}
+function toggleMute() {
+  muted = !muted; store("undertow.mute", muted); paintMute();
+  if (!muted) { unlockAudio(); setTimeout(() => sfx("turn"), 50); }
+}
+function paintMute() { document.querySelectorAll(".mutebtn").forEach(b => { b.textContent = b.classList.contains("short") ? (muted ? "🔇" : "🔊") : (muted ? "Sound off" : "Sound on"); b.setAttribute("aria-label", muted ? "Sound is off, turn on" : "Sound is on, turn off"); }); }
+paintMute();
+const shipHTML = (p, color, extra) => `<div class="shipg ${extra || ""}" style="--p:${Math.max(0, Math.min(1, p)).toFixed(3)}"><div class="hull"><svg viewBox="0 0 44 32" aria-hidden="true"><path d="M22 2 V22" stroke="#3a2606" stroke-width="1.6"/><path d="M23.5 4 L35 20 H23.5 Z" fill="#f5edda"/><path d="M20.5 6 L10 20 H20.5 Z" fill="${color || "#8EC4F7"}"/><path d="M3 21 H41 L35 30 H9 Z" fill="#6e4520" stroke="#3a2606" stroke-width="1"/></svg></div><div class="water"></div></div>`;
+// ships in a sheet or overlay start at last round's level, then sink to the new one
+function animateShips(root, over) {
+  setTimeout(() => root.querySelectorAll(".shipg[data-to]").forEach(el => {
+    el.style.setProperty("--p", el.dataset.to);
+    if (over && el.dataset.sunk) el.classList.add("sunk");
+    if (over && el.dataset.win) el.classList.add("afloat");
+  }), reduceMotion ? 0 : 500);
+}
+function tickCounts(root) {
+  root.querySelectorAll(".cnt").forEach(el => {
+    let v = +el.dataset.from; const to = +el.dataset.to; if (v >= to) return;
+    const iv = setInterval(() => { v++; el.textContent = v; sfx("tally"); if (v >= to) clearInterval(iv); }, 260);
+  });
+}
+// ---------- TV: the shared table ----------
+const NEXT_MS = 15000; // with a TV, the next round deals itself after this long
+let tvDealt = null, tvArrowKey = null, prevTaken = {}, prevPlayed = new Set();
+function renderTV() {
+  const s = room.state;
+  if (s.phase === "lobby") { show("vTVLobby"); tvOverlay(null); return renderTVLobby(); }
+  show("vTVGame");
+  $("tvRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)} of ${s.perHand}`;
+  $("tvCode2").textContent = code;
+  tvSeats(s); renderTable(s, TVV()); tvSide(s); tvDeal(s); tvArrow(s); tvOverlay(s);
+}
+function renderTVLobby() {
+  $("tvCode").textContent = code;
+  const url = location.origin + location.pathname + "?room=" + code, qrs = Math.round(Math.min(320, Math.max(160, innerHeight * 0.32)));
+  if ($("tvQr").dataset.u !== url + qrs) { $("tvQr").dataset.u = url + qrs; $("tvQr").innerHTML = ""; try { new QRCode($("tvQr"), { text: url, width: qrs, height: qrs, colorDark: "#0b1a2e", colorLight: "#ffffff" }); } catch (e) {} }
+  $("tvUrl").textContent = (location.host + location.pathname).replace(/index\.html$/, "");
+  const ids = order(), n = ids.length, key = ids.map(id => id + (players()[id].online === false ? "0" : "1") + players()[id].name).join(",");
+  $("tvCount").textContent = `Sailors · ${n} of 6`;
+  if ($("tvPlist").dataset.key !== key) {
+    $("tvPlist").dataset.key = key;
+    $("tvPlist").innerHTML = n ? ids.map((id, i) => { const p = players()[id]; return `<div class="tvp" style="animation-delay:${i * 0.05}s">${avatar(p, 52)}<span>${esc(p.name)}</span>${i === 0 ? '<span class="host">LEAD</span>' : ""}${p.online === false ? '<span class="host away">AWAY</span>' : ""}</div>`; }).join("") : '<div class="tvempty">Nobody aboard yet. Scan the code to join.</div>';
+  }
+  $("tvCross").checked = !room.settings || room.settings.cross !== false;
+  $("tvStart").disabled = n < MIN_P || n > MAX_P;
+  $("tvHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points. ${nameOf(ids[0])} can also set sail from their phone.`;
+}
+$("tvStart").onclick = async () => { if (!isTV) return; $("tvStart").disabled = true; await roomRef.child("settings").set({ preview: false, cross: $("tvCross").checked }); await startGame(); };
+$("tvCross").onchange = () => { if (isTV) roomRef.child("settings/cross").set($("tvCross").checked); };
+const seatEl = id => document.querySelector(`#tvSeats .seat[data-seat="${id}"]`);
+function leftOf(id, s) { const played = trickOf(s).some(t => t.p === id) ? 1 : 0; return s.phase === "play" ? s.perHand - (s.trickNo - 1) - played : Math.max(0, s.perHand - s.trickNo); }
+function tvSeats(s) {
+  const o = order(), n = o.length, box = $("tvSeats");
+  if (box.dataset.key !== o.join(",")) {
+    box.dataset.key = o.join(",");
+    // seats round the oval, starting at the bottom
+    box.innerHTML = o.map((id, i) => { const a = Math.PI / 2 + (2 * Math.PI * i) / n; return `<div class="seat" data-seat="${id}" style="left:${50 + 40.5 * Math.cos(a)}%;top:${50 + 40 * Math.sin(a)}%"></div>`; }).join("");
+  }
+  o.forEach(id => {
+    const el = seatEl(id), p = players()[id] || {}, taken = (s.taken || {})[id] || 0, left = leftOf(id, s);
+    const turn = (s.phase === "play" && s.turn === id) || (s.phase === "captain" && s.res && s.res.winner === id);
+    const grew = prevTaken[id] != null && taken > prevTaken[id]; prevTaken[id] = taken;
+    el.classList.toggle("turn", turn);
+    el.innerHTML = `<div class="avwrap">${avatar(p, 54)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
+      <span class="nm">${esc(p.name)}</span><span class="fan">${Array.from({ length: Math.min(left, 15) }, () => '<span class="back"></span>').join("")}</span>
+      <span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken · ${scores()[id] || 0} pts</span>`;
+  });
+}
+function tvDeal(s) {
+  if (s.phase !== "play" || s.trickNo !== 1 || trickOf(s).length || tvDealt === s.round) return;
+  tvDealt = s.round; if (reduceMotion) return;
+  const c = $("tvCenter").getBoundingClientRect(), cx = c.left + c.width / 2, cy = c.top + c.height / 2, o = order(), per = Math.min(s.perHand, 8);
+  let k = 0;
+  for (let r = 0; r < per; r++) o.forEach(id => {
+    const seat = seatEl(id); if (!seat) return;
+    const b = seat.getBoundingClientRect(), d = document.createElement("div"), delay = (k++) * 40;
+    d.className = "flyback"; d.style.left = cx + "px"; d.style.top = cy + "px"; $("tvFly").appendChild(d);
+    setTimeout(() => { d.style.transform = `translate(${b.left + b.width / 2 - cx}px, ${b.top + b.height / 2 - cy}px) rotate(${340 + Math.random() * 60}deg) scale(0.6)`; d.style.opacity = "0"; }, delay + 30);
+    setTimeout(() => d.remove(), delay + 800);
+  });
+  for (let i = 0; i < Math.ceil(k / 9); i++) setTimeout(() => sfx("deal"), i * 360);
+}
+function tvArrow(s) {
+  const key = s.round + ":" + s.trickNo;
+  if (s.phase !== "play" || !s.res || !s.res.picked || trickOf(s).length || tvArrowKey === key) return;
+  tvArrowKey = key;
+  const a = seatEl(s.res.pickedBy), b = seatEl(s.res.picked), svg = $("tvArrow"), T = $("tvTable").getBoundingClientRect();
+  if (!a || !b) return;
+  const pt = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2 - T.left, r.top + r.height / 2 - T.top]; };
+  let [x1, y1] = pt(a), [x2, y2] = pt(b), path;
+  if (a === b) { const r = 70; path = `M${x1 - 30},${y1 - 40} C${x1 - r * 2},${y1 - r * 2.4} ${x1 + r * 2},${y1 - r * 2.4} ${x1 + 30},${y1 - 46}`; }
+  else {
+    const qx = (x1 + x2) / 2 + (T.width / 2 - (x1 + x2) / 2) * 0.8, qy = (y1 + y2) / 2 + (T.height / 2 - (y1 + y2) / 2) * 0.8;
+    const pull = (x, y, px, py, d) => { const L = Math.hypot(x - px, y - py) || 1; return [x + (px - x) * d / L, y + (py - y) * d / L]; };
+    [x1, y1] = pull(x1, y1, qx, qy, 50); [x2, y2] = pull(x2, y2, qx, qy, 64);
+    path = `M${x1},${y1} Q${qx},${qy} ${x2},${y2}`;
+  }
+  svg.innerHTML = `<defs><marker id="ah" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 z" fill="#f2c14e"/></marker></defs><path class="arc" d="${path}" marker-end="url(#ah)"/>`;
+  setTimeout(() => { svg.innerHTML = ""; }, 3400);
+}
+function tvSide(s) {
+  const o = order(), sc = scores(), sink = s.sinkAt || 15;
+  const fkey = JSON.stringify(sc) + o.join(",");
+  if ($("tvFleet").dataset.key !== fkey) {
+    $("tvFleet").dataset.key = fkey;
+    $("tvFleet").innerHTML = o.slice().sort((a, b) => (sc[a] || 0) - (sc[b] || 0)).map(id => { const p = players()[id] || {}, t = sc[id] || 0; return `<div class="fleetrow">${avatar(p, 28)}<div class="fnm">${esc(p.name)}</div>${shipHTML(t / sink, p.color)}<span class="tot">${t}</span></div>`; }).join("") + `<div class="fsink">A ship sinks at ${sink} points</div>`;
+  }
+  const cross = !room.settings || room.settings.cross !== false;
+  $("tvLogBox").classList.toggle("hidden", !cross);
+  if (!cross) return;
+  const played = new Set(playedOf(s)), n = o.length, lkey = [...played].join(",") + "|" + n;
+  if ($("tvLog").dataset.key === lkey) return;
+  $("tvLog").dataset.key = lkey;
+  $("tvLog").innerHTML = SUITS.filter(su => !(n === 3 && (su.k === "drift" || su.k === "levi"))).map(su => `<div class="logrow"><span class="ln" style="color:${su.col}">${su.name}</span><span class="chips">${Array.from({ length: su.hi - su.lo + 1 }, (_, i) => { const v = su.lo + i; return `<span class="chip ${played.has(v) ? "on" : ""} ${played.has(v) && !prevPlayed.has(v) ? "new" : ""} ${isCaptain(v) ? "cap" : ""}" style="--c:${su.col};--k:${su.ink}">${v}</span>`; }).join("")}</span></div>`).join("");
+  prevPlayed = played;
+}
+function tvOverlay(s) {
+  const h = $("tvOverlay");
+  const kind = !s ? "" : s.phase === "captain" ? "cap" : (s.phase === "roundEnd" || s.phase === "gameOver") ? s.phase : "";
+  const key = kind + ":" + (s ? s.seq : "");
+  if (h.dataset.key === key) return;
+  h.dataset.key = key;
+  if (!kind) { h.innerHTML = ""; return; }
+  if (kind === "cap") {
+    const w = nameOf(s.res.winner);
+    h.innerHTML = `<div class="tvov"><div class="rays"></div><div class="capbox"><div class="k">CAPTAIN'S CALL</div><div class="caprise">${cardHTML(s.res.card, "", '<i class="sheen"></i>').replace('class="pc', 'style="--w:min(24vh,210px)" class="pc')}</div><h2>${esc(w)} took the trick with a Captain</h2><div class="sub">${esc(w)} is choosing who leads next…</div></div></div>`;
+    return;
+  }
+  const over = kind === "gameOver", o = order(), sc = scores(), lastR = (room.log || {})[s.round] || {}, sink = s.sinkAt || 15;
+  const rows = o.map(id => ({ id, tot: sc[id] || 0, d: lastR[id] || 0 })).sort((a, b) => a.tot - b.tot);
+  const best = rows.length ? rows[0].tot : 0, winners = rows.filter(r => r.tot === best).map(r => r.id), sunk = rows.filter(r => r.tot >= sink).map(r => r.id);
+  const title = over ? `${winners.map(nameOf).map(esc).join(" & ")} ${winners.length > 1 ? "win" : "wins"}!` : `End of round ${s.round}`;
+  const sub = over ? `${sunk.map(nameOf).map(esc).join(" & ")}'s ship went down. Lowest score wins.` : `A ship sinks at ${sink} points. Lowest score wins.`;
+  h.innerHTML = `<div class="tvov"><div class="tvbox"><h2>${title}</h2><div class="sub">${sub}</div>
+    <div class="bigfleet">${rows.map((r, i) => { const p = players()[r.id] || {}; return `<div class="bf ${over && winners.includes(r.id) ? "winner" : ""}" style="--i:${i}">${shipHTML((r.tot - r.d) / sink, p.color).replace('class="shipg', `data-to="${Math.min(1, r.tot / sink).toFixed(3)}" ${sunk.includes(r.id) ? 'data-sunk="1"' : ""} ${winners.includes(r.id) ? 'data-win="1"' : ""} class="shipg`)}<div class="bfn">${avatar(p, 38)}${esc(p.name)}</div><div class="bft"><b class="cnt" data-from="${r.tot - r.d}" data-to="${r.tot}">${r.tot - r.d}</b><span class="d">+${r.d}</span></div></div>`; }).join("")}</div>
+    <div class="tvnext" id="tvNext"></div>
+    ${over ? `<button class="btn" style="max-width:320px;margin:2vh auto 0" onclick="backToLobby()">Play again</button>` : ""}</div></div>`;
+  const box = h.querySelector(".tvbox");
+  animateShips(box, over); setTimeout(() => tickCounts(box), 700);
+  if (over) { setTimeout(() => { if (sunk.length) sfx("bell"); }, 1300); setTimeout(() => { sfx("fanfare"); confetti(); }, 3200); }
+  else if (sunk.length === 0 && rows.some(r => r.tot / sink >= 0.7)) setTimeout(() => sfx("bell"), 1500);
+  tvCountdown();
+}
+function tvCountdown() {
+  const el = $("tvNext"); if (!el || !room || !room.state) return;
+  const s = room.state;
+  if (s.phase === "roundEnd") el.textContent = `Round ${s.round + 1} deals in ${Math.max(0, Math.ceil((s.at + NEXT_MS - serverNow()) / 1000))}s`;
+  else if (s.phase === "gameOver") el.textContent = `${nameOf(order()[0])} can also start a new game from their phone`;
+}
+setInterval(() => { if (isTV && room && room.state && room.state.phase === "roundEnd") tvCountdown(); }, 500);
+window.addEventListener("resize", () => { if (isTV && room && room.state) { $("tvSeats").dataset.key = ""; renderTV(); } });
 </script>
 </body>
 </html>
