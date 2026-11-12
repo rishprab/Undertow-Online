@@ -20,6 +20,44 @@
   b.g { color: #f2c14e; }
   a { color: #f2c14e; font-weight: 800; }
   .credit { color: #a9bdd2; font-size: 0.85rem; text-align: center; margin-top: 30px; }
+  /* suits that unfold into their cards */
+  .suits { display: flex; flex-direction: column; margin: 8px 0 6px; }
+  .suitrow { display: grid; grid-template-columns: 18px 1fr auto auto 18px; gap: 10px; align-items: center; width: 100%; padding: 10px 8px; border: 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; border-radius: 8px; }
+  .suitrow:hover, .suitrow:focus-visible { background: rgba(255,255,255,0.05); outline: none; }
+  .suitrow .sw { width: 14px; height: 14px; border-radius: 4px; }
+  .suitrow .nm { font-weight: 800; }
+  .suitrow .rg, .suitrow .cp { color: #a9bdd2; font-weight: 700; font-size: 0.9rem; }
+  .suitrow .chev { color: #f2c14e; transition: transform 0.3s; font-weight: 800; }
+  .suitrow[aria-expanded="true"] .chev { transform: rotate(90deg); }
+  .unfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.45s cubic-bezier(.3,.8,.3,1); }
+  .unfold.open { grid-template-rows: 1fr; }
+  .unfold > div { overflow: hidden; }
+  .pair { display: flex; gap: 16px; justify-content: center; padding: 14px 0 18px; perspective: 900px; cursor: pointer; }
+  .unfold .pc { transform: rotateX(70deg) scale(0.55) translateY(-30px); opacity: 0; transition: transform 0.6s cubic-bezier(.2,1.2,.4,1), opacity 0.35s; transform-origin: 50% 0; }
+  .unfold.open .pc { transform: none; opacity: 1; }
+  .unfold.open .pc + .pc { transition-delay: 0.1s; }
+  .pc { --w: min(calc((100vw - 110px) / 2), 230px); position: relative; width: var(--w); height: calc(var(--w) * 1.43); border-radius: calc(var(--w) * 0.08); padding: calc(var(--w) * 0.05); background: linear-gradient(170deg, #f5eddc, #e2d3b4); box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; color: #2b2116; overflow: hidden; flex: 0 0 auto; }
+  .pc img { display: block; width: 100%; height: 76%; object-fit: cover; border-radius: calc(var(--w) * 0.05); outline: 3px solid var(--c); outline-offset: -3px; }
+  .pc .num { position: absolute; left: 2px; top: 2px; width: calc(var(--w) * 0.3); height: calc(var(--w) * 0.36); background: var(--c); color: var(--k); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); display: flex; justify-content: center; padding-top: calc(var(--w) * 0.03); font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.16); border-top-left-radius: calc(var(--w) * 0.07); }
+  .pc .nm2 { margin-top: auto; font-family: Cinzel, serif; font-weight: 800; font-size: calc(var(--w) * 0.11); }
+  .pc.cap { padding: 0; border: 4px solid #e9c46a; background: #0b1a2e; box-shadow: 0 0 0 1px #6b4e12, 0 10px 30px rgba(0,0,0,0.6), 0 0 24px rgba(242,193,78,0.35); }
+  .pc.cap img { position: absolute; inset: 0; height: 100%; border-radius: 0; outline: 0; }
+  .pc.cap .num { left: 6px; top: 6px; width: calc(var(--w) * 0.3); height: calc(var(--w) * 0.3); border-radius: 50%; clip-path: none; background: radial-gradient(circle at 35% 30%, #fbe3a0, #c99a2e 70%, #8a6414); color: #2a1d00; border: 2px solid #fff1c8; align-items: center; padding: 0; font-size: calc(var(--w) * 0.13); }
+  .pc.cap .nm2 { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; color: #fff6e2; padding: calc(var(--w) * 0.16) 4px calc(var(--w) * 0.05); background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.75) 55%); }
+  .pc.cap .nm2::after { content: "CAPTAIN"; display: block; margin: 4px auto 0; width: fit-content; font-family: 'Nunito Sans', sans-serif; font-size: calc(var(--w) * 0.065); letter-spacing: 2px; color: #2a1d00; background: #e9c46a; border-radius: 5px; padding: 0 6px; }
+  .artnote { text-align: center; color: #a9bdd2; font-size: 0.82rem; margin: -8px 0 10px; }
+  /* screenshots */
+  .shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 10px 0 6px; }
+  .shots.wide { grid-template-columns: 1fr; }
+  figure { margin: 0; }
+  figure img { display: block; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); cursor: zoom-in; box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+  figcaption { font-size: 0.82rem; color: #a9bdd2; margin-top: 6px; line-height: 1.4; }
+  figcaption b { color: #eaf1f8; }
+  @media (max-width: 560px) { .shots { grid-template-columns: 1fr 1fr; } .shots figure:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 60%; justify-self: center; } }
+  .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(4,10,20,0.92); display: flex; align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; animation: fade 0.2s both; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.7); }
+  @keyframes fade { from { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .unfold, .unfold .pc, .suitrow .chev { transition: none !important; } }
 </style>
 </head>
 <body>
@@ -39,16 +77,23 @@
 
   <section>
     <h2>The deck</h2>
-    <p>60 cards in eight suits. The smaller a suit, the higher its numbers. The top card of each suit is its <b class="g">Captain</b> (gold border).</p>
-    <table><tr><th>Suit</th><th>Cards</th><th>Captain</th></tr>
-      <tr><td><span class="dot" style="background:#E08A2E"></span>Driftwood</td><td>0–10</td><td>10</td></tr>
-      <tr><td><span class="dot" style="background:#D9473F"></span>Coral</td><td>11–20</td><td>20</td></tr>
-      <tr><td><span class="dot" style="background:#9AA7B5"></span>Mist</td><td>21–29</td><td>29</td></tr>
-      <tr><td><span class="dot" style="background:#3D86CF"></span>Glacier</td><td>31–38</td><td>38</td></tr>
-      <tr><td><span class="dot" style="background:#2F8C55"></span>Shoals</td><td>41–47</td><td>47</td></tr>
-      <tr><td><span class="dot" style="background:#7A55C9"></span>Tempest</td><td>51–56</td><td>56</td></tr>
-      <tr><td><span class="dot" style="background:#22B3AA"></span>Maelstrom</td><td>61–65</td><td>65</td></tr>
-      <tr><td><span class="dot" style="background:#8E2443"></span>Leviathan</td><td>71–74</td><td>74</td></tr></table>
+    <p>60 cards in eight suits. The smaller a suit, the higher its numbers. The top card of each suit is its <b class="g">Captain</b> (gold border). <b class="g">Tap a suit</b> to see its cards.</p>
+    <div class="suits" id="suits"></div>
+    <p class="artnote">Paintings: Turner, Haeckel, Friedrich, Vernet and Rembrandt (public domain); the Leviathan is original.</p>
+  </section>
+
+  <section>
+    <h2>A look around</h2>
+    <p>Tap any picture to see it full size.</p>
+    <div class="shots">
+      <figure><img src="help/phone-play.jpg" alt="A phone during play: opponents along the top, the trick in the middle, the gangplank and verdict above a fanned hand with one card lifted" loading="lazy"><figcaption><b>Your turn.</b> The trick is in the middle with the winning card glowing. The picked card is lifted out of your hand, with the gangplank and the red or green verdict above it.</figcaption></figure>
+      <figure><img src="help/phone-captain.jpg" alt="The Captain's call screen with the Glacier Captain card and a list of players to choose from" loading="lazy"><figcaption><b>Captain's call.</b> Take a trick with a Captain and you choose who leads next.</figcaption></figure>
+      <figure><img src="help/phone-roundend.jpg" alt="End of round scores with each player's ship sinking lower into the water" loading="lazy"><figcaption><b>End of a round.</b> Every point drags your ship lower. Lowest score is in front.</figcaption></figure>
+    </div>
+    <div class="shots wide">
+      <figure><img src="help/tv-table.jpg" alt="The shared TV table: four seats round an oval, a finished trick in the middle, the fleet and ship's log on the right" loading="lazy"><figcaption><b>With a TV.</b> Seats round the table, the trick in the middle with a banner explaining who took it, the fleet of ships on the right and the ship's log of every card played this round.</figcaption></figure>
+      <figure><img src="help/tv-lobby.jpg" alt="The TV lobby with a large QR code and room code, the sailors who have joined, and game settings" loading="lazy"><figcaption><b>Setting sail.</b> Scan the QR code to join. Add computer sailors and choose the settings before you start.</figcaption></figure>
+    </div>
   </section>
 
   <section>
@@ -56,7 +101,7 @@
     <p>Whoever holds the <b class="g">0</b> opens the first trick of each round with it (with 3 sailors, the <b class="g">11</b>). Play goes round the table, one card each.</p>
     <p><b class="g">Following:</b> if you hold a card of <i>any</i> suit already in the trick, you must play one of them. If you can't, play anything, which adds a new suit to the trick.</p>
     <p>The game lights up only the cards you're allowed to play.</p>
-    <p><b class="g">Reading your cards:</b> the column of small dots on each card shows where it sits in its suit, with the big gold dot marking this card (top dot = just below the Captain). Tap any card, even when it's not your turn, and the <b class="g">gangplank</b> slides out above your hand with every number in that suit: your card in gold, your other cards in cream, the Captain starred. If the host turns on <b class="g">Cross out played cards</b> in the lobby, cards already played this round are slashed out too, and the gangplank counts how many higher cards are still out there.</p>
+    <p><b class="g">Reading your cards:</b> the column of small dots on each card shows where it sits in its suit, with the big gold dot marking this card (top dot = just below the Captain). <b class="g">Slide your finger along your hand</b> to browse: the card under your finger lifts and grows (your phone gives a little tick as you move between cards, where it can). Let go to keep it picked, tap it again to put it back, and press Play or drag it up towards the table to play it. Pick any card, even when it's not your turn, and the <b class="g">gangplank</b> above your hand shows every number in that suit: your card in gold, your other cards in cream, the Captain starred. If the host turns on <b class="g">Cross out played cards</b> in the lobby, cards already played this round are slashed out too, and the gangplank counts how many higher cards are still out there.</p>
   </section>
 
   <section>
@@ -64,7 +109,7 @@
     <p>The suit with the <b class="g">most cards</b> in the trick wins, and the <b class="g">highest card of that suit</b> takes it. If suits tie for most cards, the highest card among the tied suits takes it.</p>
     <div class="ex">Coral 14, Coral 17, Glacier 36, Glacier 33, Glacier 38 → Glacier has 3 cards to Coral's 2, so the <b class="g">38</b> takes it.</div>
     <div class="ex">Coral 14, Coral 17, Glacier 36, Glacier 33 → 2 each, so the highest of them, the <b class="g">36</b>, takes it.</div>
-    <p>So a big number is dangerous only if its suit ends up the biggest group. The “If you play this” box (the host can switch it on in the lobby) shows who would take the trick right now if you played the card you've picked.</p>
+    <p>So a big number is dangerous only if its suit ends up the biggest group. The red or green line under the gangplank (the host can switch it off in the lobby) shows who would take the trick right now if you played the card you've picked.</p>
     <p>The trick-taker leads the next trick with any card.</p>
   </section>
 
@@ -86,5 +131,29 @@
   <p style="text-align:center"><a href="index.html">Back to the game</a></p>
   <div class="credit">Undertow is a fan-made online version of the trick-taking game Seas of Strife.<br>Card art: Turner, Haeckel, Friedrich, Vernet, Rembrandt (public domain). Leviathan: original.</div>
 </main>
+<script>
+const SUITS = [
+  ["Driftwood", 0, 10, "#E08A2E", "#1A1206", "driftwood", "50% 50%"], ["Coral", 11, 20, "#D9473F", "#FFFFFF", "coral", "50% 62%"],
+  ["Mist", 21, 29, "#9AA7B5", "#14202E", "mist", "50% 52%"], ["Glacier", 31, 38, "#3D86CF", "#FFFFFF", "glacier", "50% 35%"],
+  ["Shoals", 41, 47, "#2F8C55", "#FFFFFF", "shoals", "50% 45%"], ["Tempest", 51, 56, "#7A55C9", "#FFFFFF", "tempest", "50% 45%"],
+  ["Maelstrom", 61, 65, "#22B3AA", "#06201E", "maelstrom", "50% 48%"], ["Leviathan", 71, 74, "#8E2443", "#FFFFFF", "leviathan", "50% 62%"]
+];
+const card = (n, s, cap) => `<div class="pc ${cap ? "cap" : ""}" style="--c:${s[3]};--k:${s[4]}"><img src="cards/${s[5]}.jpg" alt="${s[0]} ${n}${cap ? ", the Captain" : ""}" style="object-position:${s[6]}"><b class="num">${n}</b><span class="nm2">${s[0]}</span></div>`;
+document.getElementById("suits").innerHTML = SUITS.map((s, i) => `<button class="suitrow" aria-expanded="false" aria-controls="uf${i}" data-i="${i}"><span class="sw" style="background:${s[3]}"></span><span class="nm">${s[0]}</span><span class="rg">${s[1]}–${s[2]}</span><span class="cp">Captain ${s[2]}</span><span class="chev">›</span></button>
+  <div class="unfold" id="uf${i}"><div><div class="pair" data-i="${i}" title="Tap to fold away">${card(Math.round((s[1] + s[2] - 1) / 2), s, false)}${card(s[2], s, true)}</div></div></div>`).join("");
+function toggle(i) {
+  document.querySelectorAll(".suitrow").forEach((b, j) => {
+    const open = j === i && b.getAttribute("aria-expanded") !== "true";
+    b.setAttribute("aria-expanded", open); document.getElementById("uf" + j).classList.toggle("open", open);
+    if (open) setTimeout(() => b.scrollIntoView({ behavior: "smooth", block: "nearest" }), 350);
+  });
+}
+document.getElementById("suits").addEventListener("click", e => { const t = e.target.closest(".suitrow, .pair"); if (t) toggle(+t.dataset.i); });
+document.querySelectorAll("figure img").forEach(img => img.addEventListener("click", () => {
+  const lb = document.createElement("div"); lb.className = "lightbox"; lb.innerHTML = `<img src="${img.src}" alt="${img.alt}">`;
+  lb.onclick = () => lb.remove(); document.body.appendChild(lb);
+}));
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".lightbox").forEach(l => l.remove()); });
+</script>
 </body>
 </html>
