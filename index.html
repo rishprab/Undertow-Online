@@ -11,7 +11,7 @@
   :root {
     --sea0: #050c18; --sea1: #0b1a2e; --sea2: #13304f; --ink: #eaf1f8; --muted: #a9bdd2; --gold: #f2c14e; --gold2: #c99a2e;
     --panel: rgba(255,255,255,0.06); --line: rgba(255,255,255,0.12); --red: #ff8a7a; --green: #6fd39a;
-    --cw: 62px; /* hand card width */
+    --cw: 84px; /* hand card width */
     --tw: 58px; /* table card width */
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -85,7 +85,7 @@
   .opp .crown { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
 
   .table { position: relative; flex: 1; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border-radius: 50% / 34%; background: radial-gradient(ellipse, rgba(242,193,78,0.07), rgba(0,0,0,0) 70%); border: 1px solid rgba(242,193,78,0.16); margin: 4px 0; padding: 14px 8px; }
-  .trick { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--tw) * 1.43 + 20px); align-items: flex-start; }
+  .trick { display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--tw) * 1.43 + 20px); align-items: flex-start; }
   .tslot { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
   .tslot .pc { --w: var(--tw); }
   .tslot .who { font-size: 0.72rem; font-weight: 800; color: var(--muted); max-width: calc(var(--tw) + 10px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -108,16 +108,23 @@
   .banner .cap { display: inline-block; margin-top: 6px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1d00; border-radius: 10px; padding: 4px 10px; }
   @keyframes pop { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); } to { opacity: 1; transform: translateX(-50%); } }
 
-  .preview { border-radius: 14px; padding: 9px 12px; font-size: 0.9rem; font-weight: 700; line-height: 1.35; margin: 2px 0 6px; border: 2px solid; min-height: 0; }
-  .preview.safe { background: rgba(47,140,85,0.2); border-color: var(--green); }
-  .preview.risk { background: rgba(217,71,63,0.2); border-color: var(--red); }
-  .preview .k { font-size: 0.7rem; letter-spacing: 1.5px; opacity: 0.85; display: block; }
+  /* the dock above the hand: always the same height, so nothing jumps when you pick a card */
+  .dock { position: relative; flex: 0 0 auto; height: 90px; margin: 4px 0 0; border-radius: 14px; background: rgba(0,0,0,0.16); border: 1px dashed rgba(242,193,78,0.16); }
+  .dock.short { height: 66px; }
+  .dockhint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 14px; color: var(--muted); font-weight: 700; font-size: 0.85rem; transition: opacity 0.2s; pointer-events: none; }
+  .verdict { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: 0.8rem; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; overflow: hidden; }
+  .verdict.risk { background: rgba(217,71,63,0.25); color: #ffd2cb; }
+  .verdict.safe { background: rgba(47,140,85,0.28); color: #d2f5e1; }
+  .verdict .vd { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+  .verdict.risk .vd { background: var(--red); } .verdict.safe .vd { background: var(--green); }
+  .verdict .more { margin-left: auto; opacity: 0.8; font-weight: 700; }
 
-  .handwrap { position: relative; padding-top: 22px; }
+  .handwrap { position: relative; isolation: isolate; padding-top: 62px; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+  .handwrap:focus-visible { box-shadow: inset 0 0 0 2px var(--gold); border-radius: 14px; }
+  .swipehint { position: absolute; left: 50%; top: 0; transform: translateX(-50%); font-size: 0.75rem; font-weight: 800; color: var(--gold); opacity: 0; transition: opacity 0.2s; white-space: nowrap; pointer-events: none; z-index: 300; }
+  .swipehint.on { opacity: 1; }
   /* gangplank: every number in the selected card's suit */
-  .gangarea { position: relative; height: 0; overflow: visible; transition: height 0.3s; }
-  .gangarea.open { height: 64px; }
-  .gang { position: absolute; left: 0; right: 0; top: 0; transition: transform 0.35s cubic-bezier(.2,1.2,.4,1), opacity 0.3s; }
+  .gang { position: absolute; left: 6px; right: 6px; top: 6px; transition: transform 0.3s cubic-bezier(.2,1.2,.4,1), opacity 0.25s; }
   .gang.out { transform: translateX(-110%) rotate(-3deg); opacity: 0; pointer-events: none; }
   .plank { display: flex; border-radius: 5px; overflow: hidden; box-shadow: 0 6px 16px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(40,20,5,0.7); background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 3px, rgba(40,20,5,0.18) 3px 4px, rgba(0,0,0,0) 4px 7px), linear-gradient(180deg, #a5713c, #7a4d24 60%, #5b3818); }
   .plank b { position: relative; flex: 1; min-width: 0; text-align: center; padding: 8px 0 6px; font-family: Cinzel, serif; font-weight: 800; font-size: 0.95rem; color: #2b1606; text-shadow: 0 1px 0 rgba(255,214,160,0.5); border-right: 2px solid rgba(40,20,5,0.55); }
@@ -129,15 +136,22 @@
   .plank b.gone::after { content: ""; position: absolute; left: 18%; right: 18%; top: 52%; height: 2px; background: #8e2b1c; transform: rotate(-18deg); border-radius: 1px; box-shadow: 0 1px 0 rgba(255,214,160,0.35); }
   .gangcap { display: flex; justify-content: space-between; gap: 8px; font-size: 0.75rem; font-weight: 800; color: var(--muted); margin-top: 5px; padding: 0 2px; }
   .gangcap b { color: var(--gold); }
-  .hand { position: relative; height: calc(var(--cw) * 1.43 + 26px); margin: 0 auto; }
-  .hcard { position: absolute; bottom: 0; padding: 0; pointer-events: none; border: 0; background: none; transition: transform 0.22s cubic-bezier(.2,1.3,.4,1), filter 0.2s; transform-origin: 50% 100%; }
-  .hcard.ill { filter: brightness(0.45) saturate(0.5); }
-  .hcard.ok { transform: translateY(-8px); }
-  .hcard.sel { transform: translateY(-24px) scale(1.12); z-index: 50; }
-  .hcard.sel .pc { box-shadow: 0 0 0 3px var(--gold), 0 0 20px rgba(242,193,78,0.8); }
-  .hcard.playing { transform: translateY(-120px) scale(0.8); opacity: 0; transition: transform 0.35s ease-in, opacity 0.35s; }
-  .playbar { display: flex; gap: 8px; margin-top: 8px; }
-  .playbar .btn { padding: 13px; flex: 1; min-width: 0; }
+  .hand { position: relative; height: calc(var(--cw) * 1.43 + 10px); }
+  .hcard { position: absolute; left: 0; bottom: 2px; padding: 0; pointer-events: none; border: 0; background: none; transform-origin: 50% 100%; will-change: transform; }
+  .hcard .pc { transition: filter 0.2s, box-shadow 0.2s; }
+  .hcard.ill .pc { filter: brightness(0.45) saturate(0.5); }
+  .hcard.sel .pc { filter: none; box-shadow: 0 0 0 3px var(--gold), 0 10px 26px rgba(0,0,0,0.6), 0 0 22px rgba(242,193,78,0.6); }
+  .hcard.sel.ill .pc { box-shadow: 0 0 0 3px #a9bdd2, 0 10px 26px rgba(0,0,0,0.6); }
+  .hcard.playing .pc { animation: flyout 0.35s ease-in forwards; }
+  @keyframes flyout { to { transform: translateY(-150px) scale(0.7); opacity: 0; } }
+  .playbar { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex: 0 0 auto; }
+  .playbar .btn { padding: 0 13px; height: 50px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cog { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255,255,255,0.06); color: var(--ink); font-size: 1.05rem; display: inline-flex; align-items: center; justify-content: center; padding: 0; flex: 0 0 auto; }
+  .cog.home { position: absolute; left: 14px; top: 14px; }
+  .feelrow { display: grid; grid-template-columns: 6.5em 1fr 3.4em; gap: 10px; align-items: center; font-weight: 700; margin: 10px 0; }
+  .feelrow input { width: 100%; accent-color: var(--gold); }
+  .feelrow output { color: var(--gold); font-weight: 800; text-align: right; }
+  .hapsw { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   #meSeat { flex: 0 0 auto; }
 
   /* ---------- sheets ---------- */
@@ -173,7 +187,7 @@
   @keyframes nudge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
   .bump { display: inline-block; animation: bump 0.7s cubic-bezier(.2,1.6,.4,1); }
   @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.7); color: var(--gold); } 100% { transform: scale(1); } }
-  .hcard.dealt { animation: dealin 0.5s cubic-bezier(.2,1.2,.4,1) both; animation-delay: var(--d, 0s); }
+  .pc.dealt { animation: dealin 0.5s cubic-bezier(.2,1.2,.4,1) both; animation-delay: var(--d, 0s); }
   @keyframes dealin { from { opacity: 0; transform: translateY(-160px) rotate(-25deg) scale(0.6); } }
   @keyframes pop2 { from { opacity: 0; transform: translateY(20px) scale(0.85); } to { opacity: 1; transform: none; } }
 
@@ -200,13 +214,12 @@
 
   /* phones when a TV is the table: a compact trick strip, bigger hand */
   body.tvmode #opps, body.tvmode #bars, body.tvmode .mutebtn, body.tvmode #optPreviewRow { display: none; }
-  body.tvmode { --cw: 72px; }
+  body.tvmode { --cw: 84px; }
   body.tvmode .table { flex: 0 0 auto; min-height: 0; border-radius: 16px; padding: 14px 6px 10px; margin: 2px 0 8px; --tw: 58px; gap: 6px; }
   body.tvmode .trick { min-height: calc(var(--tw) * 1.43 + 18px); }
   body.tvmode .trick .empty { padding: 14px 0; }
   body.tvmode .table .banner { position: static; transform: none; width: 100%; padding: 8px 10px; font-size: 0.85rem; animation: pop2 0.35s both; }
-  body.tvmode #preview { margin-top: auto; }
-  body.tvmode .handwrap { padding-top: 36px; }
+  body.tvmode .dock { margin-top: auto; }
   .tvnote { display: none; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.8rem; }
   body.tvmode .tvnote { display: block; }
 
@@ -317,13 +330,14 @@
     body.tvmode { --cw: 84px; }
     .opp .nm { font-size: 0.95rem; }
   }
-  @media (max-width: 360px) { :root { --cw: 56px; --tw: 50px; } }
+  @media (max-width: 360px), (max-height: 700px) { :root { --cw: 72px; } body.tvmode { --cw: 72px; } }
 </style>
 </head>
 <body>
 
 <!-- ============ HOME ============ -->
-<div class="view" id="vHome">
+<div class="view" id="vHome" style="position: relative">
+  <button class="cog home" onclick="openFeel()" aria-label="Test mode: hand feel settings">⚙</button>
   <div class="wrap">
     <h1 class="logo">UNDERTOW</h1>
     <div class="tag">A trick-dodging card game for 3–6 sailors</div>
@@ -380,6 +394,7 @@
 <!-- ============ GAME ============ -->
 <div class="view hidden" id="vGame">
   <div class="topbar">
+    <button class="cog hidden" id="cogBtn" onclick="openFeel()" aria-label="Test mode: hand feel settings">⚙</button>
     <span class="t1">UNDERTOW</span>
     <span class="t2" id="gRound"></span>
     <span class="sp"></span>
@@ -394,9 +409,9 @@
     <div class="bars" id="bars"></div>
     <div class="status" id="status"></div>
   </div>
-  <div id="preview"></div>
-  <div class="gangarea" id="gangArea"><div class="gang out" id="gang"></div></div>
-  <div class="handwrap">
+  <div class="dock" id="dock"><div class="dockhint" id="dockHint">Slide along your hand to browse your cards</div><div class="gang out" id="gang"></div></div>
+  <div class="handwrap" id="handZone" tabindex="0" aria-label="Your hand. Slide along it, or use the arrow keys, to browse. Enter plays the picked card, Escape puts it back.">
+    <div class="swipehint" id="swipeHint">↑ Release to play</div>
     <div class="hand" id="hand"></div>
   </div>
   <div class="playbar" id="playbar">
@@ -451,6 +466,7 @@
 </div>
 
 <div id="sheetHost"></div>
+<input type="checkbox" switch class="hapsw" id="hapSw" aria-hidden="true" tabindex="-1"><label for="hapSw" id="hapLab" class="hapsw" aria-hidden="true"></label>
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -487,7 +503,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -816,28 +832,122 @@ function backToLobby() { if (!isHost) { if (isLead() && room.state.phase === "ga
 let selCard = null;
 function canPlay(card) { const s = room.state; return s.phase === "play" && s.turn === uid && legalCards(myHand, trickOf(s), s.first).includes(card); }
 function pick(card) {
-  // any card can be selected to check it on the gangplank; tapping a selected card again plays it if allowed, otherwise deselects
-  if (selCard === card) { if (canPlay(card)) return playSelected(); selCard = null; }
-  else selCard = card;
-  renderHand(); renderPreview(); renderGang();
+  // select a card (to check it on the gangplank); playing is the Play button, Enter, or dragging the card up
+  if (!myHand.includes(card)) return;
+  selCard = card; const i = HZ.cards.indexOf(card); if (i >= 0) { HZ.target = i; if (HZ.focus == null) HZ.focus = i; }
+  renderHand(); renderGang();
 }
 async function playSelected() {
   const s = room.state; if (selCard == null || !canPlay(selCard)) return;
-  const card = selCard; selCard = null; renderGang();
+  const card = selCard; selCard = null; renderGang(); paintPlayBtn(s, false);
   const el = document.querySelector(`.hcard[data-c="${card}"]`); if (el) el.classList.add("playing");
-  if (navigator.vibrate) navigator.vibrate(25);
+  haptic(true); startHandLoop();
   await db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, card });
 }
 $("playBtn").onclick = playSelected;
-// cards overlap, so a tap picks whichever card's visible slice is under the finger (keyboard presses use the focused card)
-$("hand").addEventListener("click", e => {
-  const b = e.target.closest(".hcard");
-  if (b && e.detail === 0) return pick(+b.dataset.c);
-  const h = $("hand"), n = myHand.length; if (!n) return;
-  const x = e.clientX - h.getBoundingClientRect().left, step = +h.dataset.step || 1, cw = +h.dataset.cw;
-  let i = Math.floor(x / step); if (i >= n - 1) i = x <= step * (n - 1) + cw ? n - 1 : -1;
-  if (i >= 0) pick(myHand[i]);
+// ---------- the hand: slide along it to browse; the card under your finger lifts and grows ----------
+const FEEL_DEFAULT = { res: 0.25, mag: 1.3, ease: 0.22 };
+let FEEL = Object.assign({}, FEEL_DEFAULT, load("undertow.feel") || {});
+const HZ = { els: [], cards: [], focus: null, target: null, act: 0, drag: null, spread: 22, lift: 30, raf: 0, cw: 84, W: 360 };
+function handGeom() {
+  const n = HZ.cards.length, cw = HZ.cw, inner = HZ.W - cw - 2 * HZ.spread - 8;
+  const step = n > 1 ? Math.min(cw * 0.92, inner / (n - 1)) : 0;
+  return { n, step, left: 4 + HZ.spread + Math.max(0, (inner - step * (n - 1)) / 2) };
+}
+function handFrame() {
+  HZ.raf = 0;
+  const actT = (selCard != null || HZ.drag) ? 1 : 0;
+  HZ.act += (actT - HZ.act) * (reduceMotion ? 1 : 0.2);
+  if (HZ.target != null) HZ.focus = HZ.focus == null || reduceMotion ? HZ.target : HZ.focus + (HZ.target - HZ.focus) * FEEL.ease;
+  if (!actT && HZ.act < 0.01) { HZ.act = 0; HZ.focus = null; HZ.target = null; }
+  const g = handGeom(), f = HZ.focus == null ? -99 : HZ.focus, si = selCard == null ? -1 : HZ.cards.indexOf(selCard), a = HZ.act;
+  HZ.els.forEach((el, i) => {
+    const d = i - f, near = Math.exp(-(d * d) / 0.55);
+    const push = Math.sign(d) * HZ.spread * (1 - Math.exp(-Math.abs(d) * 1.4)) * a;
+    const sc = 1 + (FEEL.mag - 1) * near * a;
+    const lift = -(HZ.lift * near * a + (HZ.drag && i === si ? Math.min(90, HZ.drag.up || 0) : 0));
+    const extra = (sc - 1) * HZ.cw / 2;
+    const x = Math.max(extra + 2, Math.min(HZ.W - HZ.cw - extra - 2, g.left + i * g.step + push));
+    const rot = (i - (g.n - 1) / 2) * Math.min(2, 16 / Math.max(1, g.n)) * (1 - near * a);
+    el.style.transform = `translate(${x.toFixed(1)}px, ${lift.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    el.style.zIndex = HZ.focus == null ? i + 1 : Math.max(1, 200 - Math.round(Math.abs(d) * 10));
+  });
+  if (HZ.drag || Math.abs(HZ.act - actT) > 0.004 || (HZ.target != null && HZ.focus != null && Math.abs(HZ.focus - HZ.target) > 0.003)) HZ.raf = requestAnimationFrame(handFrame);
+}
+function startHandLoop() { if (!HZ.raf) HZ.raf = requestAnimationFrame(handFrame); }
+function sizeHandZone() { $("handZone").style.paddingTop = Math.round(HZ.cw * 1.43 * (FEEL.mag - 1) + HZ.lift + 4) + "px"; }
+// a tiny tick: Android vibrates; on iPhone, flipping a hidden on/off switch gives a light tick on recent iOS
+function haptic(strong) {
+  if (isTV) return;
+  try { if (typeof navigator.vibrate === "function") navigator.vibrate(strong ? 18 : 7); else $("hapLab").click(); } catch (e) {}
+}
+function selectIdx(i, buzz) {
+  const c = i < 0 ? null : HZ.cards[i];
+  if (c === selCard) return;
+  selCard = c; if (i >= 0) HZ.target = i;
+  if (buzz && c != null) haptic(false);
+  renderHand(); renderGang();
+}
+function idxAt(clientX) {
+  const r = $("hand").getBoundingClientRect(), g = handGeom();
+  return Math.max(0, Math.min(g.n - 1, (clientX - r.left - g.left - HZ.cw / 2) / (g.step || 1)));
+}
+const zoneEl = $("handZone");
+zoneEl.addEventListener("pointerdown", e => {
+  if (!room || !room.state || room.state.phase === "lobby" || !HZ.cards.length) return;
+  try { zoneEl.setPointerCapture(e.pointerId); } catch (x) {}
+  const f = idxAt(e.clientX), cur = selCard == null ? -1 : HZ.cards.indexOf(selCard);
+  HZ.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false, startSel: selCard, up: 0 };
+  if (cur < 0) { HZ.focus = Math.round(f); selectIdx(Math.round(f), true); } else if (Math.abs(f - cur) > 0.5 + FEEL.res) selectIdx(Math.round(f), true);
+  const ci = HZ.cards.indexOf(selCard); HZ.target = ci + (f - ci) * 0.35; startHandLoop();
 });
+zoneEl.addEventListener("pointermove", e => {
+  const D = HZ.drag; if (!D || e.pointerId !== D.id) return;
+  const dy = e.clientY - D.y0;
+  if (Math.hypot(e.clientX - D.x0, dy) > 8) D.moved = true;
+  const f = idxAt(e.clientX), ci = HZ.cards.indexOf(selCard);
+  // resistance: the pick only moves on once the finger is clearly past the middle of the next card
+  if (ci < 0 || Math.abs(f - ci) > 0.5 + FEEL.res) selectIdx(Math.round(f), true);
+  const ni = HZ.cards.indexOf(selCard); HZ.target = ni + (f - ni) * 0.35;
+  D.up = Math.max(0, -dy - 20);
+  $("swipeHint").classList.toggle("on", D.up > 50 && canPlay(selCard));
+  startHandLoop();
+});
+function endHandDrag(e) {
+  const D = HZ.drag; if (!D || e.pointerId !== D.id) return;
+  HZ.drag = null; $("swipeHint").classList.remove("on");
+  if (D.up > 50 && canPlay(selCard)) return playSelected();
+  // a quick tap on the card that was already picked puts it back
+  if (!D.moved && performance.now() - D.t0 < 350 && D.startSel != null && D.startSel === selCard) selectIdx(-1);
+  const ci = HZ.cards.indexOf(selCard); HZ.target = ci >= 0 ? ci : HZ.target; startHandLoop();
+}
+zoneEl.addEventListener("pointerup", endHandDrag);
+zoneEl.addEventListener("pointercancel", endHandDrag);
+zoneEl.addEventListener("keydown", e => {
+  if (!HZ.cards.length) return;
+  const ci = selCard == null ? -1 : HZ.cards.indexOf(selCard);
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); selectIdx(Math.max(0, Math.min(HZ.cards.length - 1, ci < 0 ? 0 : ci + (e.key === "ArrowRight" ? 1 : -1))), true); startHandLoop(); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (canPlay(selCard)) playSelected(); }
+  else if (e.key === "Escape") { selectIdx(-1); startHandLoop(); }
+});
+$("table").addEventListener("click", () => { if (selCard != null) { selectIdx(-1); startHandLoop(); } });
+// ---------- test mode: hand-feel settings, kept on this device ----------
+function openFeel() {
+  const h = $("sheetHost"); h.dataset.kind = "feel"; h.dataset.seq = "";
+  const test = !!load("undertow.test");
+  h.innerHTML = `<div class="sheet"><div class="box"><h2>Test mode</h2><div class="sub">Hand feel on this device. Changes apply straight away; try them in a game, even against computer players.</div>
+    <div class="feelrow"><label for="fRes">Resistance</label><input type="range" id="fRes" min="0" max="0.45" step="0.01" value="${FEEL.res}"><output id="oRes">${FEEL.res.toFixed(2)}</output></div>
+    <div class="feelrow"><label for="fMag">Magnify</label><input type="range" id="fMag" min="1.1" max="1.6" step="0.05" value="${FEEL.mag}"><output id="oMag">${FEEL.mag.toFixed(2)}×</output></div>
+    <div class="feelrow"><label for="fEase">Ease</label><input type="range" id="fEase" min="0.08" max="0.6" step="0.02" value="${FEEL.ease}"><output id="oEase">${FEEL.ease.toFixed(2)}</output></div>
+    <label class="toggle" style="margin:12px 0"><input type="checkbox" id="fShow" ${test ? "checked" : ""}> Show this cog during games</label>
+    <div class="stack"><button class="btn ghost" id="fReset">Back to defaults (0.25 · 1.30× · 0.22)</button><button class="btn ghost" id="fHap">Test haptic</button><button class="btn" onclick="closeSheet()">Done</button></div></div></div>`;
+  const bind = (id, out, k, fmt) => { $(id).oninput = () => { FEEL[k] = +$(id).value; $(out).textContent = fmt(FEEL[k]); store("undertow.feel", FEEL); sizeHandZone(); startHandLoop(); }; };
+  bind("fRes", "oRes", "res", v => v.toFixed(2)); bind("fMag", "oMag", "mag", v => v.toFixed(2) + "×"); bind("fEase", "oEase", "ease", v => v.toFixed(2));
+  $("fShow").onchange = () => { store("undertow.test", $("fShow").checked); $("cogBtn").classList.toggle("hidden", !$("fShow").checked); };
+  $("fReset").onclick = () => { FEEL = Object.assign({}, FEEL_DEFAULT); store("undertow.feel", FEEL); sizeHandZone(); openFeel(); };
+  $("fHap").onclick = () => haptic(true);
+}
+$("cogBtn").classList.toggle("hidden", !load("undertow.test"));
 function chooseLeader(id) { const s = room.state; if (s.phase !== "captain" || s.res.winner !== uid) return; db.ref(`rooms/${code}/pub/moves/${uid}`).set({ seq: s.seq, lead: id }); closeSheet(); }
 
 // ---------- RENDER ----------
@@ -897,6 +1007,7 @@ function renderSeats(s) {
 }
 function renderTable(s, V) {
   const trick = trickOf(s), tEl = V.tEl, me = V.me, who = id => id === me ? "You" : esc(nameOf(id));
+  if (me) { const n = order().length, avail = (V.host.clientWidth || 360) - 16, tw = Math.max(44, Math.min(room.tv ? 68 : 76, Math.floor((avail - 6 * (n - 1)) / n))); V.host.style.setProperty("--tw", tw + "px"); }
   const live = trick.length ? resolve(trick) : null;
   const sweeping = s.phase === "trickEnd" && serverNow() - s.at > TRICK_MS - 900;
   const animateFrom = (lastRound === s.round && trick.length === lastTrickLen + 1) ? trick.length - 1 : -1;
@@ -957,19 +1068,24 @@ function renderHand() {
   const s = room.state, h = $("hand"), myTurn = s.phase === "play" && s.turn === uid;
   const legal = myTurn ? legalCards(myHand, trickOf(s), s.first) : [];
   if (selCard != null && !myHand.includes(selCard)) selCard = null;
-  const n = myHand.length, W = (h.parentElement.clientWidth || 360) - 12, cw = parseFloat(getComputedStyle(h).getPropertyValue("--cw")) || 62;
-  const hKey = [myHand.join(","), selCard, myTurn, legal.join(","), W, cw].join("|");
+  const W = h.clientWidth || 360, cw = parseFloat(getComputedStyle(h).getPropertyValue("--cw")) || 84;
   let deal = false;
-  if (s.phase === "play" && s.trickNo === 1 && !trickOf(s).length && n === s.perHand && handDealt !== s.round) { handDealt = s.round; deal = !reduceMotion; sfx("deal"); }
-  if (h.dataset.key === hKey && !deal) return paintPlayBtn(s, myTurn);
-  h.dataset.key = hKey;
-  const step = n > 1 ? Math.min(cw * 0.92, (W - cw - 8) / (n - 1)) : 0, total = step * (n - 1) + cw;
-  h.style.width = total + "px"; h.dataset.step = step; h.dataset.cw = cw;
-  h.innerHTML = myHand.map((c, i) => {
-    const off = i - (n - 1) / 2, rot = n > 1 ? off * Math.min(2, 16 / n) : 0;
-    const cls = c === selCard ? "sel" : !myTurn ? "" : legal.includes(c) ? "ok" : "ill";
-    return `<button class="hcard ${cls} ${deal ? "dealt" : ""}" data-c="${c}" style="--d:${(i * 0.06).toFixed(2)}s;left:${i * step}px;rotate:${rot}deg;z-index:${i + 1}" aria-label="${suitOf(c).name} ${c}${myTurn && !legal.includes(c) ? ", can't be played now" : ""}">${cardHTML(c)}</button>`;
-  }).join("");
+  if (s.phase === "play" && s.trickNo === 1 && !trickOf(s).length && myHand.length === s.perHand && handDealt !== s.round) { handDealt = s.round; deal = !reduceMotion; sfx("deal"); }
+  const key = myHand.join(",") + "|" + W + "|" + cw;
+  if (h.dataset.key !== key || deal) {
+    h.dataset.key = key; HZ.W = W; HZ.cw = cw; HZ.cards = myHand.slice(); sizeHandZone();
+    h.querySelectorAll(".hcard").forEach(e => e.remove());
+    HZ.els = HZ.cards.map((c, i) => {
+      const b = document.createElement("button"); b.className = "hcard"; b.dataset.c = c; b.tabIndex = -1; b.innerHTML = cardHTML(c);
+      if (deal) { b.firstElementChild.classList.add("dealt"); b.firstElementChild.style.setProperty("--d", (i * 0.06).toFixed(2) + "s"); }
+      h.appendChild(b); return b;
+    });
+    if (HZ.focus != null && HZ.focus > HZ.cards.length - 1) HZ.focus = HZ.cards.length - 1;
+  }
+  HZ.els.forEach((b, i) => { const c = HZ.cards[i], bad = myTurn && !legal.includes(c); b.classList.toggle("ill", bad); b.classList.toggle("sel", c === selCard); b.setAttribute("aria-label", `${suitOf(c).name} ${c}${bad ? ", can't be played now" : ""}`); });
+  const si = selCard == null ? -1 : HZ.cards.indexOf(selCard);
+  if (si >= 0 && !HZ.drag) { HZ.target = si; if (HZ.focus == null) HZ.focus = si; }
+  startHandLoop();
   paintPlayBtn(s, myTurn);
 }
 let handDealt = null;
@@ -977,27 +1093,27 @@ function paintPlayBtn(s, myTurn) {
   const pb = $("playBtn");
   const ok = selCard != null && canPlay(selCard);
   pb.disabled = !ok;
-  pb.textContent = !myTurn ? (s.phase === "play" ? `${nameOf(s.turn)}'s turn` : "…") : selCard == null ? "Tap a card" : ok ? `Play the ${selCard}` : (trickOf(s).length ? "Can't play this: match the table" : `Can't play this: lead with the ${s.first}`);
+  pb.textContent = !myTurn ? (s.phase === "play" ? `${nameOf(s.turn)}'s turn` : "…") : selCard == null ? "Pick a card" : ok ? `Play the ${selCard}` : "Can't play that one";
 }
 function renderGang() {
-  const g = $("gang"), area = $("gangArea"), s = room.state;
-  if (selCard == null || !myHand.includes(selCard) || s.phase === "lobby") { g.classList.add("out"); area.classList.remove("open"); return; }
+  const g = $("gang"), s = room.state, showV = !!(room.settings && room.settings.preview) && !room.tv;
+  $("dock").classList.toggle("short", !showV);
+  $("dockHint").style.opacity = selCard == null ? 1 : 0;
+  $("dockHint").textContent = HZ.cards.length ? "Slide along your hand to browse your cards" : "";
+  if (selCard == null || !myHand.includes(selCard) || s.phase === "lobby") { g.classList.add("out"); return; }
   const su = suitOf(selCard), cross = !room.settings || room.settings.cross !== false, played = new Set(cross ? playedOf(s) : []);
   const nums = Array.from({ length: su.hi - su.lo + 1 }, (_, i) => su.lo + i);
   const higher = nums.filter(x => x > selCard && !myHand.includes(x) && !played.has(x)).length;
+  let verdict = "";
+  if (showV && canPlay(selCard)) {
+    const trick = trickOf(s).concat([{ p: uid, c: selCard }]), r = resolve(trick), left = order().length - trick.length, mine = r.winner === uid;
+    verdict = `<div class="verdict ${mine ? "risk" : "safe"}"><span class="vd"></span>${mine ? `You'd take it with the ${selCard}${r.cap ? " (Captain)" : ""}` : `Safe for now: ${esc(nameOf(r.winner))}'s ${r.card} takes it`}<span class="more">${left ? left + " still to play" : "last to play"}</span></div>`;
+  }
   g.innerHTML = `<div class="plank">${nums.map(x => `<b class="${x === selCard ? "me" : ""} ${myHand.includes(x) ? "mine" : ""} ${isCaptain(x) ? "cap" : ""} ${played.has(x) ? "gone" : ""}">${x}</b>`).join("")}</div>
-    <div class="gangcap"><span>${su.name} · ${isCaptain(selCard) ? "Captain" : ORD(selCard - su.lo + 1) + " of " + nums.length}</span><span>${higher ? `<b>${higher}</b>&nbsp;higher ${cross ? "still out there" : "not in your hand"}` : `<b>Nothing higher</b>&nbsp;${cross ? "still out there" : "outside your hand"}`}</span></div>`;
-  g.classList.remove("out"); area.classList.add("open");
+    <div class="gangcap"><span>${su.name} · ${isCaptain(selCard) ? "Captain" : ORD(selCard - su.lo + 1) + " of " + nums.length}</span><span>${higher ? `<b>${higher}</b>&nbsp;higher ${cross ? "still out there" : "not in your hand"}` : `<b>Nothing higher</b>&nbsp;${cross ? "still out there" : "outside your hand"}`}</span></div>${verdict}`;
+  g.classList.remove("out");
 }
-function renderPreview() {
-  const s = room.state, el = $("preview");
-  if (!room.settings || !room.settings.preview || selCard == null || !canPlay(selCard)) { el.innerHTML = ""; return; }
-  const trick = trickOf(s).concat([{ p: uid, c: selCard }]), r = resolve(trick), left = order().length - trick.length;
-  const mine = r.winner === uid;
-  const who = mine ? "You would take this trick" : `${nameOf(r.winner)}'s ${r.card} would take it`;
-  const more = left ? ` · ${left} still to play, so it can change` : "";
-  el.innerHTML = `<div class="preview ${mine ? "risk" : "safe"}"><span class="k">IF YOU PLAY THE ${selCard}</span>${who}${r.cap && mine ? ", with a Captain: you'd choose the next leader" : ""}${more}</div>`;
-}
+function renderPreview() {} // the preview now lives in the dock, as the verdict line under the gangplank
 
 // ---------- sheets ----------
 function closeSheet(only) { const h = $("sheetHost"); if (only && h.dataset.kind !== only) return; h.innerHTML = ""; h.dataset.kind = ""; }
@@ -1039,7 +1155,7 @@ function openScores(s, auto) {
 }
 $("scoresBtn").onclick = () => openScores(room.state, false);
 function confetti() { if (reduceMotion) return; for (let i = 0; i < 70; i++) { const c = document.createElement("div"); c.className = "confetti"; c.style.left = Math.random() * 100 + "vw"; c.style.background = ["#f2c14e", "#7fd3ff", "#ff8a7a", "#6fd39a"][i % 4]; c.style.animationDuration = 2 + Math.random() * 2 + "s"; c.style.animationDelay = Math.random() * 0.8 + "s"; document.body.appendChild(c); setTimeout(() => c.remove(), 5000); } }
-window.addEventListener("resize", () => { if (room && room.state && room.state.phase !== "lobby" && !isTV) renderHand(); });
+window.addEventListener("resize", () => { if (room && room.state && room.state.phase !== "lobby" && !isTV) { renderHand(); renderTable(room.state, PV()); } });
 // ---------- sound: synthesised in the browser, no audio files ----------
 // with a TV, only the TV makes noise; without one, every device does
 let actx = null, muted = !!load("undertow.mute");
