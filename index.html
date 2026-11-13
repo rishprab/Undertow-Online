@@ -538,7 +538,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -600,12 +600,17 @@ auth.signInAnonymously().catch(e => { $("homeErr").textContent = "Connection err
 function checkRejoin() {
   const last = load("undertow.last");
   if (!last || !last.code) return;
-  if (qs.get("room") && qs.get("room").toUpperCase() === last.code) return enterRoom(last.code);
-  Promise.all([db.ref(`rooms/${last.code}/pub/players/${uid}`).once("value"), db.ref(`rooms/${last.code}/pub/hostUid`).once("value")]).then(([pl, hu]) => {
+  let live = null; try { live = sessionStorage.getItem("undertow.live"); } catch (e) {}
+  const sameTab = qs.get("room") && qs.get("room").toUpperCase() === last.code && (qs.get("v") || live === last.code);
+  if (sameTab) return enterRoom(last.code);
+  Promise.all([db.ref(`rooms/${last.code}/pub/players/${uid}`).once("value"), db.ref(`rooms/${last.code}/pub/hostUid`).once("value"), db.ref(`rooms/${last.code}/pub/state/phase`).once("value")]).then(([pl, hu, ph]) => {
     const asTV = hu.val() === uid && !pl.exists();
-    if (!pl.exists() && !asTV) return;
+    if ((!pl.exists() && !asTV) || (pl.val() && pl.val().left)) { store("undertow.last", null); return; }
+    const playing = ph.val() && ph.val() !== "lobby";
     $("rejoinBox").classList.remove("hidden");
-    $("rejoinBox").innerHTML = `<div class="row" style="background:rgba(242,193,78,0.12);border-radius:12px;padding:10px"><div style="flex:1;font-weight:700">You were in game <b>${esc(last.code)}</b>${asTV ? " as the table screen" : ""}</div><button class="btn small" onclick="enterRoom('${esc(last.code)}')">Rejoin</button></div>`;
+    $("rejoinBox").innerHTML = `<div style="background:rgba(242,193,78,0.12);border-radius:12px;padding:10px"><div style="font-weight:700;margin-bottom:8px">You were in game <b>${esc(last.code)}</b>${asTV ? " as the table screen" : ""}${playing ? ", and it's still going" : ""}.</div>
+      <div class="row"><button class="btn small" style="flex:1" onclick="enterRoom('${esc(last.code)}')">Rejoin</button><button class="btn ghost small" style="flex:1" onclick="leaveFromHome('${esc(last.code)}', ${hu.val() === uid})">Leave game</button></div>
+      ${hu.val() === uid && playing ? `<div style="color:var(--muted);font-size:0.8rem;font-weight:700;margin-top:6px">You started it, so leaving ends it for everyone.</div>` : playing ? `<div style="color:var(--muted);font-size:0.8rem;font-weight:700;margin-top:6px">If you leave, a computer plays your hand.</div>` : ""}</div>`;
   });
 }
 async function newRoom(pub) {
@@ -643,12 +648,14 @@ $("joinBtn").onclick = async () => {
   const pub = s.val(), me = (pub.players || {})[uid];
   if (!me && pub.state && pub.state.phase !== "lobby") { $("homeErr").textContent = "That game has already set sail"; return; }
   if (!me && Object.keys(pub.players || {}).length >= MAX_P) { $("homeErr").textContent = "That game is full (6 sailors)"; return; }
-  await db.ref(`rooms/${c}/pub/players/${uid}`).update({ name, color: selColor, joinedAt: me ? me.joinedAt : TS, online: true });
+  await db.ref(`rooms/${c}/pub/players/${uid}`).update({ name, color: selColor, joinedAt: me ? me.joinedAt : TS, online: true, bot: null, left: null });
   enterRoom(c);
 };
 
+let presenceRef = null, presenceCb = null;
 function enterRoom(c) {
-  code = c; store("undertow.last", { code: c });
+  code = c; store("undertow.last", { code: c }); try { sessionStorage.setItem("undertow.live", c); } catch (e) {}
+  $("rejoinBox").classList.add("hidden");
   history.replaceState(null, "", location.pathname + "?room=" + c);
   roomRef = db.ref(`rooms/${c}/pub`);
   let presence = false;
@@ -658,7 +665,7 @@ function enterRoom(c) {
     const amPlayer = !!(room.players || {})[uid];
     if (!amPlayer && room.hostUid !== uid) { toast("You're not in this game"); return leaveRoom(true); }
     // online/away presence, for players only (the table screen isn't a player)
-    if (amPlayer && !presence) { presence = true; const meRef = db.ref(`rooms/${c}/pub/players/${uid}/online`); db.ref(".info/connected").on("value", x => { if (x.val()) { meRef.onDisconnect().set(false); meRef.set(true); } }); }
+    if (amPlayer && !presence) { presence = true; presenceRef = db.ref(`rooms/${c}/pub/players/${uid}/online`); const meRef = presenceRef; presenceCb = db.ref(".info/connected").on("value", x => { if (x.val()) { meRef.onDisconnect().set(false); meRef.set(true); } }); }
     isHost = room.hostUid === uid; isTV = !!room.tv && isHost;
     document.body.classList.toggle("tv", isTV); document.body.classList.toggle("tvmode", !!room.tv && !isTV);
     if ((room.ver || 0) > APP_VERSION) return needUpdate();
@@ -667,13 +674,52 @@ function enterRoom(c) {
   handRef = db.ref(`rooms/${c}/hands/${uid}`);
   handRef.on("value", s => { myHand = (s.val() || []).filter(v => v != null).sort((a, b) => a - b); if (room) render(); });
 }
+function stopPresence() {
+  if (presenceCb) { db.ref(".info/connected").off("value", presenceCb); presenceCb = null; }
+  if (presenceRef) { try { presenceRef.onDisconnect().cancel(); } catch (e) {} presenceRef = null; }
+}
 function leaveRoom(silent) {
   if (roomRef) roomRef.off(); if (handRef) handRef.off();
+  stopPresence(); clearTimeout(brainT); brainKey = null; closeSheet(); selCard = null;
+  Object.values(presenters).forEach(presReset);
+  try { sessionStorage.removeItem("undertow.live"); } catch (e) {}
   if (!silent && room && room.state && room.state.phase === "lobby" && code) db.ref(`rooms/${code}/pub/players/${uid}`).remove();
   store("undertow.last", null); room = null; code = null; isTV = false; document.body.classList.remove("tv", "tvmode");
   history.replaceState(null, "", location.pathname); show("vHome");
 }
 $("leaveBtn").onclick = () => leaveRoom(false);
+// Leaving mid-game: a computer takes over your hand. If you started the game (and there's no TV running it), it ends for everyone.
+async function leaveGame() {
+  if (!room || !code) return;
+  const c = code, inLobby = room.state && room.state.phase === "lobby";
+  if (inLobby) return leaveRoom(false);
+  if (isHost) await endGameFor(c, Object.keys(players()));
+  else await db.ref(`rooms/${c}/pub/players/${uid}`).update({ bot: true, left: true, online: true });
+  leaveRoom(true); toast(isHost ? "Game ended" : "You left the game. A computer has your hand.");
+}
+async function endGameFor(c, ids) {
+  await Promise.all(ids.map(id => db.ref(`rooms/${c}/hands/${id}`).remove().catch(() => {})));
+  await db.ref(`rooms/${c}/pub`).remove();
+}
+async function leaveFromHome(c, host) {
+  try {
+    if (host) { const ps = (await db.ref(`rooms/${c}/pub/players`).once("value")).val() || {}; await endGameFor(c, Object.keys(ps)); }
+    else {
+      const ph = (await db.ref(`rooms/${c}/pub/state/phase`).once("value")).val();
+      if (ph === "lobby") await db.ref(`rooms/${c}/pub/players/${uid}`).remove();
+      else await db.ref(`rooms/${c}/pub/players/${uid}`).update({ bot: true, left: true, online: true });
+    }
+  } catch (e) {}
+  store("undertow.last", null); $("rejoinBox").classList.add("hidden"); history.replaceState(null, "", location.pathname);
+  toast(host ? "Game ended" : "You've left that game");
+}
+function confirmLeave() {
+  const h = $("sheetHost"); h.dataset.kind = "leave"; h.dataset.seq = "";
+  const endsIt = isHost && !room.tv;
+  h.innerHTML = `<div class="sheet"><div class="box" style="text-align:center"><h2>Leave this game?</h2>
+    <div class="sub">${endsIt ? "You started this game, so leaving ends it for everyone." : "A computer player will take over your hand so the others can keep playing."}</div>
+    <div class="stack"><button class="btn" onclick="leaveGame()">${endsIt ? "End the game and leave" : "Leave the game"}</button><button class="btn ghost" onclick="closeSheet()">Stay</button></div></div></div>`;
+}
 function needUpdate() {
   if ($("updBox")) return;
   const d = document.createElement("div"); d.id = "updBox"; d.className = "sheet";
@@ -1299,7 +1345,8 @@ function openScores(s, auto) {
     <div style="margin-top:16px" class="stack">
       ${s.phase === "roundEnd" ? (ctl ? `<button class="btn" onclick="nextRound()">Deal round ${s.round + 1}${room.tv ? " now" : ""}</button>${room.tv ? `<div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem">Otherwise it deals automatically in a few seconds</div>` : ""}` : `<div style="text-align:center;color:var(--muted);font-weight:800">${waitRound}</div>`) : ""}
       ${over ? (ctl ? `<button class="btn" onclick="backToLobby()">Play again</button>` : `<div style="text-align:center;color:var(--muted);font-weight:800">Waiting for ${room.tv ? esc(nameOf(lead())) + " or the table screen" : "the host"}…</div>`) : ""}
-      ${!auto ? `<button class="btn ghost" onclick="closeSheet()">Close</button>` : ""}
+      ${!auto ? `<button class="btn ghost" onclick="closeSheet()">Close</button>${s.phase !== "gameOver" ? `<button class="btn ghost" style="border-color:rgba(255,138,122,0.5);color:var(--red)" onclick="confirmLeave()">Leave game</button>` : ""}` : ""}
+      ${over ? `<button class="btn ghost" onclick="leaveRoom(true)">Back to the start</button>` : ""}
     </div></div></div>`;
   if (anim) {
     const box = h.querySelector(".box"); animateShips(box, over); setTimeout(() => tickCounts(box), 600);
