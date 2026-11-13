@@ -68,7 +68,10 @@
   .back { --w: 14px; width: var(--w); height: calc(var(--w) * 1.4); border-radius: 3px; background: radial-gradient(circle at 50% 45%, #1d4670, #0d2440 70%); border: 1px solid var(--gold2); display: inline-block; }
 
   /* ---------- game ---------- */
-  #vGame { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; padding: 8px 10px 12px; min-height: 100dvh; }
+  #vGame { display: flex; flex-direction: column; max-width: 760px; margin: 0 auto; padding: max(8px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom)); height: 100vh; height: 100dvh; overflow: hidden; }
+  #vGame > * { flex-shrink: 0; }
+  html.ingame, html.ingame body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  #vGame > .table { flex-shrink: 1; }
   .topbar { display: flex; align-items: center; gap: 8px; padding: 4px 2px 8px; }
   .topbar .t1 { font-family: Cinzel, serif; font-weight: 800; color: var(--gold); letter-spacing: 2px; }
   .topbar .t2 { color: var(--muted); font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -80,32 +83,55 @@
   .opp .avwrap { position: relative; }
   .opp.turn .av { box-shadow: 0 0 0 3px #7fd3ff, 0 0 18px rgba(127,211,255,0.8); }
   .opp .nm { font-weight: 800; font-size: 0.85rem; max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .opp .meta.mini, .opp .botav { display: none; }
+  /* 4+ opponents: one compact row so the whole game fits on a phone */
+  .opps.many { flex-wrap: nowrap; gap: 2px; padding-bottom: 2px; }
+  .opps.many .opp { flex: 1 1 0; min-width: 0; padding: 4px 1px; gap: 1px; }
+  .opps.many .av { width: 32px !important; height: 32px !important; font-size: 12px !important; }
+  .opps.many .opp .nm { font-size: 0.74rem; max-width: 100%; }
+  .opps.many .opp .botb, .opps.many .opp .meta.full { display: none; }
+  .opps.many .opp .meta.mini { display: block; font-size: 0.62rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .opps.many .opp .botav { display: block; position: absolute; right: -8px; bottom: -3px; font-size: 0.5rem; font-weight: 800; letter-spacing: 0.5px; color: #0b1a2e; background: #a9bdd2; border-radius: 4px; padding: 0 3px; }
+  .opps.many .tleft { font-size: 0.62rem; padding: 0 5px; }
   .opp .meta { font-size: 0.72rem; color: var(--muted); font-weight: 700; display: flex; gap: 4px; align-items: center; white-space: nowrap; }
   .opp .off { position: absolute; top: -4px; right: -8px; font-size: 0.6rem; background: #7a2a2a; color: #fff; border-radius: 6px; padding: 1px 4px; font-weight: 800; }
   .opp .crown { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
 
-  .table { position: relative; flex: 1; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border-radius: 50% / 34%; background: radial-gradient(ellipse, rgba(242,193,78,0.07), rgba(0,0,0,0) 70%); border: 1px solid rgba(242,193,78,0.16); margin: 4px 0; padding: 14px 8px; }
-  .trick { display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap; min-height: calc(var(--tw) * 1.43 + 20px); align-items: flex-start; }
-  .tslot { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
+  .table { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border-radius: 50% / 34%; background: radial-gradient(ellipse, rgba(242,193,78,0.07), rgba(0,0,0,0) 70%); border: 1px solid rgba(242,193,78,0.16); margin: 4px 0; padding: 14px 8px; }
+  .trick { position: relative; align-self: stretch; height: calc(var(--tw) * 1.43 + 34px); flex: 0 0 auto; }
+  .tslot { position: absolute; left: 0; top: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: transform 0.55s cubic-bezier(.3,.8,.3,1); will-change: transform; }
   .tslot .pc { --w: var(--tw); }
   .tslot .who { font-size: 0.72rem; font-weight: 800; color: var(--muted); max-width: calc(var(--tw) + 10px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .tslot.win .pc { box-shadow: 0 0 0 3px var(--gold), 0 0 22px rgba(242,193,78,0.85); transform: translateY(-6px); }
-  .tslot.win::before { content: "WINNING"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.58rem; font-weight: 800; letter-spacing: 1.2px; border-radius: 6px; padding: 1px 5px; z-index: 2; }
-  .tslot .pc { transition: transform 0.3s, box-shadow 0.3s; }
-  .tslot.fly .pc { animation: fly 0.55s cubic-bezier(.2,1.2,.4,1) both; }
-  @keyframes fly { from { opacity: 0.4; transform: translate(var(--fx, 0), var(--fy, -60px)) rotate(var(--fr, -14deg)) rotateY(180deg) scale(0.6); } to { opacity: 1; transform: none; } }
-  .trick.sweep .tslot { transition: transform 0.75s cubic-bezier(.5,0,.75,0), opacity 0.75s; transform: translate(var(--sx, 0), var(--sy, -200px)) scale(0.15) rotate(300deg); opacity: 0; }
-  .trick .empty { color: var(--muted); font-weight: 700; padding: 30px 0; text-align: center; }
-  .bars { display: flex; flex-direction: column; gap: 4px; min-height: 18px; }
-  .bar { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 800; }
+  .tslot .pc { transition: filter 0.35s; }
+  .tslot.dim .pc { filter: brightness(0.5) saturate(0.6); }
+  .tglow { position: absolute; left: 0; top: 14px; border-radius: calc(var(--tw) * 0.1); box-shadow: 0 0 0 3px var(--gold), 0 0 24px 4px rgba(242,193,78,0.7); opacity: 0; transition: transform 0.5s cubic-bezier(.4,0,.2,1), opacity 0.35s; pointer-events: none; z-index: 40; }
+  .tglow::before { content: "WINNING"; position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #2a1d00; font-size: 0.58rem; font-weight: 800; letter-spacing: 1.2px; border-radius: 6px; padding: 1px 5px; white-space: nowrap; }
+  .tglow.pulse { animation: gpulse 1.6s ease-in-out infinite; }
+  @keyframes gpulse { 50% { box-shadow: 0 0 0 3px var(--gold), 0 0 34px 8px rgba(242,193,78,0.95); } }
+  .ripple { position: absolute; width: calc(var(--tw) * 1.5); height: calc(var(--tw) * 0.5); border-radius: 50%; border: 2px solid rgba(242,193,78,0.55); pointer-events: none; animation: ripple 0.7s ease-out forwards; z-index: 1; }
+  @keyframes ripple { from { transform: translate(-50%, -50%) scale(0.4); opacity: 0.9; } to { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
+  .splash { position: fixed; z-index: 70; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; border: 3px solid rgba(127,211,255,0.85); pointer-events: none; animation: splash 0.7s ease-out forwards; }
+  @keyframes splash { from { transform: scale(0.6); opacity: 1; } to { transform: scale(1.9); opacity: 0; } }
+  .hurry { position: absolute; right: 14px; top: 8px; font-size: 0.7rem; font-weight: 800; color: var(--muted); opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 6; }
+  .hurry.on { opacity: 1; }
+  .bars { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 52px; transition: opacity 0.4s; }
+  .bar { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 800; transition: transform 0.3s; }
+  .bar.pulse { animation: bpulse 0.9s ease-in-out 2; }
+  @keyframes bpulse { 50% { transform: scale(1.15); } }
   .bar .lab { width: 78px; text-align: right; }
   .bar .segs { display: flex; gap: 3px; }
-  .bar .seg { width: 22px; height: 12px; border-radius: 3px; animation: grow 0.35s ease-out both; }
-  @keyframes grow { from { transform: scaleY(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
-  .status { text-align: center; font-weight: 800; font-size: 1rem; min-height: 1.4em; }
+  .bar .seg { width: 22px; height: 12px; border-radius: 3px; }
+  .bar .seg.grow { animation: grow 0.45s cubic-bezier(.2,1.4,.4,1) both; transform-origin: 0 50%; }
+  @keyframes grow { from { transform: scaleX(0); opacity: 0; } to { transform: none; opacity: 1; } }
+  .status { text-align: center; font-weight: 800; font-size: 1rem; height: 1.45em; line-height: 1.45em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; transition: opacity 0.3s; }
   .status.mine { color: var(--gold); }
-  .banner { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); background: rgba(9,24,42,0.94); border: 2px solid var(--gold); border-radius: 16px; padding: 12px 16px; text-align: center; font-weight: 800; z-index: 5; width: min(92%, 420px); animation: pop 0.35s cubic-bezier(.2,1.4,.4,1) both; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-  .banner .cap { display: inline-block; margin-top: 6px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1d00; border-radius: 10px; padding: 4px 10px; }
+  .banner { position: absolute; left: 50%; bottom: 6%; width: min(92%, 420px); background: rgba(9,24,42,0.94); border: 2px solid var(--gold); border-radius: 16px; padding: 10px 14px; text-align: center; font-weight: 800; z-index: 30; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; transform: translate(-50%, 16px); transition: opacity 0.45s, transform 0.45s cubic-bezier(.2,1.1,.4,1); pointer-events: none; }
+  .banner.on { opacity: 1; transform: translate(-50%, 0); }
+  .banner .l1, .banner .l2, .banner .l3 { display: block; opacity: 0; transform: translateY(8px); transition: opacity 0.4s, transform 0.4s; }
+  .banner .l2 { color: var(--gold); }
+  .banner .l3:empty { display: none; }
+  .banner .l3 span { display: inline-block; margin-top: 6px; background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #2a1d00; border-radius: 10px; padding: 4px 10px; }
+  .banner .on { opacity: 1; transform: none; }
   @keyframes pop { from { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); } to { opacity: 1; transform: translateX(-50%); } }
 
   /* the dock above the hand: always the same height, so nothing jumps when you pick a card */
@@ -175,12 +201,6 @@
 
   /* ---------- stage 2: animation pieces shared by every screen ---------- */
   .pc .back-face { position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(circle at 50% 45%, #1d4670, #0d2440 70%); border: 2px solid var(--gold2); opacity: 0; pointer-events: none; z-index: 5; }
-  .tslot.fly .pc .back-face { animation: unflip 0.55s both; }
-  @keyframes unflip { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
-  .tslot.win::after { content: ""; position: absolute; left: 50%; top: 0; width: var(--tw); height: calc(var(--tw) * 1.43); transform: translate(-50%, -6px); border-radius: calc(var(--tw) * 0.1); box-shadow: 0 0 26px 4px rgba(242,193,78,0.55); animation: glow 1.6s ease-in-out infinite; pointer-events: none; }
-  @keyframes glow { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
-  .trick.ended .tslot:not(.win) .pc { filter: brightness(0.5) saturate(0.6); transform: scale(0.93); }
-  .trick.ended .tslot.win .pc { transform: translateY(-12px) scale(1.08); }
   .opp.turn .av, .seat.turn .av { animation: turnring 1.4s ease-in-out infinite; }
   @keyframes turnring { 0%, 100% { box-shadow: 0 0 0 3px #7fd3ff, 0 0 10px rgba(127,211,255,0.5); } 50% { box-shadow: 0 0 0 5px #7fd3ff, 0 0 26px rgba(127,211,255,0.95); } }
   .status.mine { animation: nudge 1.8s ease-in-out infinite; }
@@ -215,10 +235,8 @@
   /* phones when a TV is the table: a compact trick strip, bigger hand */
   body.tvmode #opps, body.tvmode #bars, body.tvmode .mutebtn, body.tvmode #optPreviewRow { display: none; }
   body.tvmode { --cw: 84px; }
-  body.tvmode .table { flex: 0 0 auto; min-height: 0; border-radius: 16px; padding: 14px 6px 10px; margin: 2px 0 8px; --tw: 58px; gap: 6px; }
-  body.tvmode .trick { min-height: calc(var(--tw) * 1.43 + 18px); }
-  body.tvmode .trick .empty { padding: 14px 0; }
-  body.tvmode .table .banner { position: static; transform: none; width: 100%; padding: 8px 10px; font-size: 0.85rem; animation: pop2 0.35s both; }
+  body.tvmode .table { flex: 0 1 250px; height: auto; min-height: 0; justify-content: flex-start; border-radius: 16px; padding: 6px 6px 10px; margin: 2px 0 8px; --tw: 58px; gap: 4px; }
+  body.tvmode .table .banner { bottom: 8px; padding: 7px 10px; font-size: 0.85rem; }
   body.tvmode .dock { margin-top: auto; }
   .tvnote { display: none; text-align: center; color: var(--muted); font-weight: 700; font-size: 0.8rem; }
   body.tvmode .tvnote { display: block; }
@@ -256,12 +274,13 @@
   .tvtable .oval { position: absolute; left: 8%; right: 8%; top: 12%; bottom: 12%; border-radius: 50%; border: 2px solid rgba(242,193,78,0.22); background: radial-gradient(ellipse, rgba(23,55,90,0.75), rgba(11,26,46,0.55) 70%); box-shadow: inset 0 0 60px rgba(0,0,0,0.5), 0 0 0 10px rgba(91,56,24,0.35), 0 0 0 12px rgba(242,193,78,0.12); }
   .tvcenter { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 1.2vh; width: 72%; }
   .tvcenter .tslot .who { font-size: clamp(12px, 1vw, 18px); max-width: none; }
-  .tvcenter .trick .empty { font-size: clamp(14px, 1.4vw, 24px); }
   .tvcenter .bar { font-size: clamp(12px, 1vw, 18px); }
   .tvcenter .bar .lab { width: 7em; }
   .tvcenter .bar .seg { width: 2vw; height: 1.4vh; }
   .tvcenter .status { font-size: clamp(16px, 1.6vw, 28px); }
-  .tvcenter .banner { position: relative; left: auto; bottom: auto; transform: none; width: auto; max-width: 100%; font-size: clamp(14px, 1.3vw, 24px); animation: pop2 0.35s cubic-bezier(.2,1.4,.4,1) both; }
+  .tvtable .banner { bottom: auto; top: 64%; width: min(54%, 640px); font-size: clamp(14px, 1.3vw, 24px); }
+  .tvcenter .trick { width: 100%; }
+  .tvcenter .bars { min-height: 7vh; }
   .seat { position: absolute; z-index: 3; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 0.4vh; padding: 0.8vh 1vw; border-radius: 16px; background: rgba(9,24,42,0.82); border: 1px solid var(--line); min-width: 9vw; transition: background 0.3s, box-shadow 0.3s; font-size: clamp(11px, 1vw, 19px); }
   .seat.turn { background: rgba(20,55,85,0.95); box-shadow: 0 0 0 2px #7fd3ff, 0 0 30px rgba(127,211,255,0.35); }
   .seat .avwrap { position: relative; }
@@ -331,6 +350,22 @@
     .opp .nm { font-size: 0.95rem; }
   }
   @media (max-width: 360px), (max-height: 700px) { :root { --cw: 72px; } body.tvmode { --cw: 72px; } }
+  @media (max-height: 760px) {
+    .dock { height: 82px; } .dock.short { height: 60px; }
+    .plank b { padding: 5px 0 3px; font-size: 0.85rem; }
+    .verdict { margin-top: 3px; padding: 2px 8px; }
+    .table { padding: 8px 6px; gap: 6px; }
+    .bars { min-height: 40px; }
+    .topbar { padding-bottom: 4px; }
+    .playbar { margin-top: 4px; } .playbar .btn { height: 46px; }
+  }
+  @media (max-height: 620px) {
+    :root, body.tvmode { --cw: 62px; }
+    #vGame .bars { display: none; }
+    #vGame .table { padding: 4px 6px; gap: 2px; }
+    .dock { height: 76px; } .dock.short { height: 56px; }
+    .gangcap { margin-top: 2px; }
+  }
 </style>
 </head>
 <body>
@@ -503,7 +538,7 @@ const serverNow = () => Date.now() + clockOffset;
 
 // ---------- the deck ----------
 // bump when uploading a new version; devices with an older cached copy are asked to refresh
-const APP_VERSION = 6;
+const APP_VERSION = 8;
 const SUITS = [
   { k: "drift", name: "Driftwood", lo: 0, hi: 10, col: "#E08A2E", ink: "#1A1206", img: "cards/driftwood.jpg", pos: "50% 50%" },
   { k: "coral", name: "Coral", lo: 11, hi: 20, col: "#D9473F", ink: "#FFFFFF", img: "cards/coral.jpg", pos: "50% 62%" },
@@ -517,7 +552,7 @@ const SUITS = [
 const suitOf = n => SUITS.find(s => n >= s.lo && n <= s.hi);
 const isCaptain = n => suitOf(n).hi === n;
 const COLORS = ["#FFB3A8", "#F0A24A", "#F2D16B", "#9FD08C", "#7FE0D8", "#8EC4F7", "#C3A6F5", "#F5A6D0"];
-const TRICK_MS = 2600, AUTO_MS = 20000, MIN_P = 3, MAX_P = 6;
+const TRICK_MS = 5300, AUTO_MS = 20000, MIN_P = 3, MAX_P = 6;
 const deckFor = n => { const d = []; SUITS.forEach(s => { if (n === 3 && (s.k === "drift" || s.k === "levi")) return; for (let v = s.lo; v <= s.hi; v++) d.push(v); }); return d; };
 const sinkAt = n => n <= 4 ? 15 : n === 5 ? 12 : 10;
 const firstCard = n => n === 3 ? 11 : 0;
@@ -556,7 +591,7 @@ if (qs.get("room")) $("codeIn").value = qs.get("room").toUpperCase();
 function drawSwatches() { $("swatches").innerHTML = COLORS.map(c => `<button class="sw ${c === selColor ? "sel" : ""}" style="background:${c}" aria-label="Colour ${c}" onclick="pickColor('${c}')"></button>`).join(""); }
 function pickColor(c) { selColor = c; store("undertow.color", c); drawSwatches(); }
 drawSwatches();
-function show(v) { ["vHome", "vLobby", "vGame", "vTVLobby", "vTVGame"].forEach(id => $(id).classList.toggle("hidden", id !== v)); }
+function show(v) { document.documentElement.classList.toggle("ingame", v === "vGame"); ["vHome", "vLobby", "vGame", "vTVLobby", "vTVGame"].forEach(id => $(id).classList.toggle("hidden", id !== v)); }
 function myName() { const n = $("nameIn").value.trim(); if (!n) { $("homeErr").textContent = "Pop your name in first"; return null; } store("undertow.name", n); return n; }
 
 auth.onAuthStateChanged(u => { if (u) { uid = u.uid; checkRejoin(); } });
@@ -705,7 +740,7 @@ function brainTick() {
   const s = room.state, key = s.phase + ":" + s.seq;
   if (key !== brainKey) { clearTimeout(brainT); brainKey = key; }
   brainCmds(s);
-  const botDelay = () => (room.tv ? 1400 : 950) + Math.random() * 700;
+  const botDelay = () => 1500 + Math.random() * 800;
   if (s.phase === "play") {
     const mv = (room.moves || {})[s.turn];
     if (mv && mv.seq === s.seq && mv.card != null) { clearTimeout(brainT); return humanPlay(s, s.turn, mv.card); }
@@ -717,7 +752,9 @@ function brainTick() {
     if (timerMs()) wait = Math.min(wait, (s.turnAt || s.at) + timerMs() - serverNow());
     if (wait < Infinity) brainT = setTimeout(() => autoPlay(s.seq, why), Math.max(50, wait));
   } else if (s.phase === "trickEnd") {
-    clearTimeout(brainT); brainT = setTimeout(() => afterTrick(s.seq), Math.max(50, s.at + TRICK_MS - serverNow()));
+    // wait for the end-of-trick steps; if plays came in quickly, screens are still catching up, so allow for that too
+    const extra = s.res && s.res.cap ? 400 : 0, behind = showClock + LAND_MS + 4400 + extra - Date.now();
+    clearTimeout(brainT); brainT = setTimeout(() => afterTrick(s.seq), Math.max(50, s.at + TRICK_MS + extra - serverNow(), behind));
   } else if (s.phase === "captain") {
     const mv = (room.moves || {})[s.res.winner];
     if (mv && mv.seq === s.seq && mv.lead && players()[mv.lead]) { clearTimeout(brainT); return startTrick(s, mv.lead); }
@@ -752,8 +789,11 @@ function brainCmds(s) {
   else if (mv.cmd === "deal" && s.phase === "roundEnd") deal();
   else if (mv.cmd === "again" && s.phase === "gameOver") backToLobby();
 }
+// when screens will have shown each card: they show plays at least GAP_MS apart
+let showClock = 0;
 function applyPlay(s, p, card) {
   if (room.state.seq !== s.seq) return;
+  showClock = Math.max(Date.now(), showClock + GAP_MS);
   const trick = trickOf(s).concat([{ p, c: card }]), played = playedOf(s).concat([card]);
   if (trick.length < order().length) return setState({ trick, played, turn: nextSeat(p), seq: s.seq + 1, first: null, turnAt: TS });
   const res = resolve(trick);
@@ -930,7 +970,7 @@ zoneEl.addEventListener("keydown", e => {
   else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (canPlay(selCard)) playSelected(); }
   else if (e.key === "Escape") { selectIdx(-1); startHandLoop(); }
 });
-$("table").addEventListener("click", () => { if (selCard != null) { selectIdx(-1); startHandLoop(); } });
+$("table").addEventListener("click", () => { if (presHurry(presenters.phone)) return; if (selCard != null) { selectIdx(-1); startHandLoop(); } });
 // ---------- test mode: hand-feel settings, kept on this device ----------
 function openFeel() {
   const h = $("sheetHost"); h.dataset.kind = "feel"; h.dataset.seq = "";
@@ -952,13 +992,14 @@ function chooseLeader(id) { const s = room.state; if (s.phase !== "captain" || s
 
 // ---------- RENDER ----------
 let lastPhase = null, lastTrickLen = 0, lastRound = null, wasMyTurn = false;
-const PV = () => ({ tEl: $("trick"), bars: $("bars"), st: $("status"), host: $("table"), seat: id => document.querySelector(`#opps .opp[data-seat="${id}"]`) || (id === uid ? $("meSeat") : null), me: uid });
-const TVV = () => ({ tEl: $("tvTrick"), bars: $("tvBars"), st: $("tvStatus"), host: $("tvCenter"), seat: seatEl, me: null });
+const phoneSeat = id => id === uid ? (HZ.cards.length ? $("handZone") : $("meSeat")) : document.querySelector(`#opps .opp[data-seat="${id}"]`);
+const PV = () => { const V = { tEl: $("trick"), bars: $("bars"), st: $("status"), host: $("table"), hurryHost: $("table"), seat: phoneSeat, me: uid }; V.pres = presFor("phone", V); return V; };
+const TVV = () => { const V = { tEl: $("tvTrick"), bars: $("tvBars"), st: $("tvStatus"), host: $("tvTable"), hurryHost: null, seat: seatEl, me: null }; V.pres = presFor("tv", V); return V; };
 function render() {
   if (!room || !room.state) return;
   if (isTV) return renderTV();
   const s = room.state;
-  if (s.phase === "lobby") { show("vLobby"); closeSheet(); wasMyTurn = false; return renderLobby(); }
+  if (s.phase === "lobby") { show("vLobby"); closeSheet(); wasMyTurn = false; if (presenters.phone) presReset(presenters.phone); return renderLobby(); }
   show("vGame");
   renderTop(s); renderSeats(s); renderTable(s, PV()); renderHand(); renderPreview(); renderGang(); paintTimers();
   const myTurn = s.phase === "play" && s.turn === uid;
@@ -995,71 +1036,183 @@ function seatHTML(id, s, mine) {
   const grew = phonePrevTaken[id] != null && taken > phonePrevTaken[id]; phonePrevTaken[id] = taken;
   const turn = (s.phase === "play" && s.turn === id) || (s.phase === "captain" && s.res && s.res.winner === id);
   return `<div class="opp ${turn ? "turn" : ""}" data-seat="${id}">
-      <div class="avwrap">${avatar(p, mine ? 34 : 42)}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
+      <div class="avwrap">${avatar(p, mine ? 34 : 42)}${p.bot && !mine ? '<span class="botav">BOT</span>' : ""}${p.online === false ? '<span class="off">AWAY</span>' : ""}${s.phase === "captain" && s.res && s.res.winner === id ? '<span class="crown">CAPTAIN</span>' : ""}</div>
       ${mine ? `<div style="display:flex;flex-direction:column"><span class="nm">You</span><span class="meta"><b class="${grew ? "bump" : ""}" style="font-weight:800">${taken}</b> taken · ${(scores()[id] || 0)} pts</span></div>` :
-      `<span class="nm">${esc(p.name)}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${turn ? '<span class="tleft"></span>' : ""}<span class="meta">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken</span><span class="meta">${(scores()[id] || 0)} pts</span>`}
+      `<span class="nm">${esc(p.name)}${p.bot ? '<span class="botb">BOT</span>' : ""}</span>${turn ? '<span class="tleft"></span>' : ""}<span class="meta full">${left} card${left === 1 ? "" : "s"} · <b class="${grew ? "bump" : ""}">${taken}</b> taken</span><span class="meta full">${(scores()[id] || 0)} pts</span><span class="meta mini"><b class="${grew ? "bump" : ""}">${taken}</b> taken · ${(scores()[id] || 0)} pts</span>`}
     </div>`;
 }
 function renderSeats(s) {
   const o = order(), me = o.indexOf(uid), others = o.slice(me + 1).concat(o.slice(0, Math.max(0, me)));
   $("opps").innerHTML = others.map(id => seatHTML(id, s, false)).join("");
+  $("opps").classList.toggle("many", others.length >= 4 || innerHeight < 760);
   $("meSeat").outerHTML = seatHTML(uid, s, true).replace('class="opp', 'id="meSeat" style="flex-direction:row;gap:8px;padding:4px 8px" class="opp');
 }
+// ---------- the trick presenter ----------
+// Every screen shows plays one at a time (at least GAP_MS apart), each card arcing in and settling,
+// then the end-of-trick steps. Nothing is redrawn: cards are added once and only ever moved.
+const GAP_MS = 1100, LAND_MS = 900;
+const presenters = {};
+function presFor(name, V) { if (!presenters[name]) presenters[name] = { V, key: null, count: 0, ended: false, q: [], busy: false, last: -1e9, slots: [], timers: [], ending: null, fresh: true, wIdx: -1 }; return presenters[name]; }
+function presT(P, fn, ms) { const id = setTimeout(fn, ms); P.timers.push(id); return id; }
+function presReset(P) { P.timers.forEach(clearTimeout); P.timers = []; P.q = []; P.busy = false; P.key = null; P.count = 0; P.ended = false; P.fresh = true; presClear(P); }
+function presParts(P) {
+  const V = P.V;
+  if (!P.glow || !P.glow.isConnected) { P.glow = document.createElement("div"); P.glow.className = "tglow"; V.tEl.appendChild(P.glow); }
+  if (!P.banner || !P.banner.isConnected) { P.banner = document.createElement("div"); P.banner.className = "banner"; P.banner.innerHTML = '<span class="l1"></span><span class="l2"></span><span class="l3"></span>'; V.host.appendChild(P.banner); }
+  if (V.hurryHost && (!P.hurry || !P.hurry.isConnected)) { P.hurry = document.createElement("span"); P.hurry.className = "hurry"; P.hurry.textContent = "Tap to hurry"; V.hurryHost.appendChild(P.hurry); }
+}
+function presSync(P, s) {
+  presParts(P);
+  const key = s.round + ":" + s.trickNo, trick = trickOf(s), inst = P.fresh || reduceMotion;
+  if (P.key !== key) { if (P.key != null) P.q.push({ t: "clear" }); P.key = key; P.count = 0; P.ended = false; }
+  while (P.count < trick.length) { P.q.push({ t: "card", p: trick[P.count].p, c: trick[P.count].c, inst }); P.count++; }
+  if ((s.phase === "trickEnd" || s.phase === "captain") && s.res && !P.ended && trick.length) { P.ended = true; P.q.push({ t: "end", res: s.res, inst }); }
+  P.fresh = false;
+  presRun(P);
+}
+function presRun(P) {
+  if (P.busy || !P.q.length) return;
+  if (P.ending && !P.ending.done) return presGather(P, true); // something is waiting behind the end of a trick: hurry it
+  const ev = P.q[0];
+  if (ev.t === "card") {
+    const wait = ev.inst ? 0 : Math.max(0, P.last + GAP_MS - performance.now());
+    if (wait > 0) { P.busy = true; presT(P, () => { P.busy = false; presRun(P); }, wait); return; }
+    P.q.shift(); presCard(P, ev);
+  } else if (ev.t === "end") { P.q.shift(); presEnd(P, ev); presRun(P); }
+  else { P.q.shift(); presClear(P); presRun(P); }
+}
+const presWho = (P, id) => id === P.V.me ? "You" : esc(nameOf(id));
+function presCentre(el, rel) { if (!el) return null; const a = el.getBoundingClientRect(); if (!a.width) return null; const b = rel.getBoundingClientRect(); return [a.left + a.width / 2 - b.left, a.top + a.height / 2 - b.top]; }
+function presLayout(P) {
+  const n = P.slots.length; if (!n) return;
+  const tw = P.slots[0].el.firstElementChild.offsetWidth || 60, gap = Math.max(6, Math.round(tw * 0.1)), W = P.V.tEl.clientWidth;
+  const x0 = (W - (n * tw + (n - 1) * gap)) / 2;
+  P.slots.forEach((sl, i) => { sl.x = x0 + i * (tw + gap); sl.w = tw; sl.el.style.transform = `translate(${sl.x}px, ${sl.y || 0}px)${sl.extra || ""}`; });
+  if (P.wIdx >= 0 && P.slots[P.wIdx]) { const w = P.slots[P.wIdx]; P.glow.style.width = tw + "px"; P.glow.style.height = Math.round(tw * 1.43) + "px"; P.glow.style.transform = `translate(${w.x}px, ${w.y || 0}px)${w.extra || ""}`; }
+}
+function presCard(P, ev) {
+  const V = P.V, tEl = V.tEl;
+  P.busy = true; P.last = performance.now();
+  const el = document.createElement("div"); el.className = "tslot";
+  el.innerHTML = cardHTML(ev.c, "", ev.inst ? "" : '<i class="back-face"></i>') + `<span class="who" style="transition:opacity 0.3s;${ev.inst ? "" : "opacity:0"}">${presWho(P, ev.p)}</span>`;
+  tEl.appendChild(el);
+  const sl = { el, p: ev.p, c: ev.c, x: 0, y: 0 }; P.slots.push(sl);
+  el.style.transition = "none"; presLayout(P);
+  const land = () => {
+    el.style.transition = ""; el.querySelector(".who").style.opacity = 1;
+    if (!ev.inst) {
+      const rp = document.createElement("div"); rp.className = "ripple"; rp.style.left = sl.x + sl.w / 2 + "px"; rp.style.top = 14 + sl.w * 1.3 + "px"; tEl.appendChild(rp); setTimeout(() => rp.remove(), 800);
+      sfx("snap");
+    }
+    presBar(P, ev.c, ev.inst); presGlow(P);
+    P.busy = false; presRun(P);
+  };
+  if (ev.inst) { requestAnimationFrame(() => { el.style.transition = ""; }); return land(); }
+  // existing cards slide aside (they keep their transition); the new one arcs in from the player's seat
+  P.slots.forEach(o => { if (o !== sl) o.el.style.transition = ""; });
+  const from = presCentre(V.seat(ev.p), tEl) || [tEl.clientWidth / 2, -140];
+  const dx = from[0] - (sl.x + sl.w / 2), dy = from[1] - (14 + sl.w * 0.715);
+  const pc = el.firstElementChild;
+  pc.animate([
+    { transform: `translate(${dx}px, ${dy}px) rotate(-16deg) rotateY(180deg) scale(0.55)` },
+    { transform: `translate(${dx * 0.45}px, ${Math.min(dy, 0) * 0.45 - 70}px) rotate(-6deg) rotateY(90deg) scale(0.85)`, offset: 0.45 },
+    { transform: "translate(0, 6px) rotate(1deg) rotateY(0deg) scale(1.04)", offset: 0.82 },
+    { transform: "none" }
+  ], { duration: LAND_MS, easing: "cubic-bezier(.3,.6,.3,1)" });
+  pc.querySelector(".back-face").animate([{ opacity: 1 }, { opacity: 1, offset: 0.44 }, { opacity: 0, offset: 0.5 }, { opacity: 0 }], { duration: LAND_MS, fill: "forwards" });
+  presT(P, land, LAND_MS);
+}
+function presBar(P, c, inst) {
+  const su = suitOf(c), bars = P.V.bars; if (!bars) return;
+  bars.style.opacity = 1;
+  let row = bars.querySelector(`[data-s="${su.k}"]`);
+  if (!row) { row = document.createElement("div"); row.className = "bar"; row.dataset.s = su.k; row.innerHTML = `<span class="lab" style="color:${su.col}">${su.name}</span><span class="segs"></span>`; bars.appendChild(row); }
+  const seg = document.createElement("span"); seg.className = "seg" + (inst ? "" : " grow"); seg.style.background = su.col; row.querySelector(".segs").appendChild(seg);
+  seg.addEventListener("animationend", () => seg.classList.remove("grow"), { once: true });
+  // keep the biggest suit on top, but only move rows when the order actually changes
+  const rows = [...bars.children], sorted = rows.slice().sort((a, b) => b.querySelectorAll(".seg").length - a.querySelectorAll(".seg").length);
+  if (sorted.some((r, i) => r !== rows[i])) sorted.forEach(r => bars.appendChild(r));
+}
+function presGlow(P) {
+  const r = resolve(P.slots.map(sl => ({ p: sl.p, c: sl.c }))), i = P.slots.findIndex(sl => sl.p === r.winner);
+  P.wIdx = i; P.slots.forEach((sl, j) => { sl.y = j === i ? -6 : 0; });
+  P.glow.style.opacity = 1; P.glow.classList.add("pulse"); presLayout(P);
+}
+function presEnd(P, ev) {
+  const r = ev.res, V = P.V, wi = P.slots.findIndex(sl => sl.p === r.winner), b = P.banner;
+  if (wi < 0) return;
+  const su = SUITS.find(x => x.k === suitOf(r.card).k), counts = Object.values(r.counts).sort((a, c) => c - a);
+  const why = r.tied.length > 1 ? `${r.tied.map(k => SUITS.find(x => x.k === k).name).join(" and ")} tie at ${r.most}, highest card wins.` : Object.keys(r.counts).length > 1 ? `${su.name} has the most cards (${counts.join(" vs ")}).` : `All ${su.name}.`;
+  const res = `${r.winner === V.me ? "You take" : esc(nameOf(r.winner)) + " takes"} the trick with the ${r.card}.`;
+  const cap = r.cap ? `<span>Captain's card! ${r.winner === V.me ? "You choose" : esc(nameOf(r.winner)) + " chooses"} who leads next</span>` : "";
+  b.querySelector(".l1").textContent = why; b.querySelector(".l2").textContent = res; b.querySelector(".l3").innerHTML = cap;
+  const E = P.ending = { done: false, wi, res: r, steps: [], inst: ev.inst };
+  const lift = () => { const w = P.slots[wi]; w.y = -14; w.extra = " scale(1.08)"; presLayout(P); };
+  const dim = j => P.slots[j] && P.slots[j].el.classList.add("dim");
+  if (ev.inst) { P.slots.forEach((sl, j) => { if (j !== wi) dim(j); }); lift(); b.classList.add("on"); b.querySelectorAll(".l1,.l2,.l3").forEach(x => x.classList.add("on")); return; }
+  const at = (fn, ms) => E.steps.push(presT(P, fn, ms));
+  if (P.hurry) P.hurry.classList.add("on");
+  at(() => { const row = V.bars && V.bars.querySelector(`[data-s="${su.k}"]`); if (row) row.classList.add("pulse"); }, 500);
+  P.slots.forEach((sl, j) => { if (j !== wi) at(() => dim(j), 650 + j * 140); });
+  at(() => { lift(); b.classList.add("on"); b.querySelector(".l1").classList.add("on"); }, 1000);
+  at(() => { b.querySelector(".l2").classList.add("on"); if (r.winner === V.me && navigator.vibrate && !isTV) navigator.vibrate([30, 40, 30]); }, 1500);
+  if (r.cap) at(() => { b.querySelector(".l3").classList.add("on"); sfx("captain"); }, 1900);
+  at(() => presGather(P, false), r.cap ? 3200 : 2800);
+}
+// the cards gather on the winning card, then the stack glides to the winner's seat
+function presGather(P, fast) {
+  const E = P.ending; if (!E || E.done) return;
+  E.done = true; E.steps.forEach(clearTimeout); if (P.hurry) P.hurry.classList.remove("on");
+  P.busy = true;
+  const V = P.V, b = P.banner, k = fast ? 0.5 : 1, wi = E.wi, w = P.slots[wi];
+  if (E.inst || reduceMotion) { presClear(P); P.busy = false; return presRun(P); }
+  b.classList.add("on"); b.querySelectorAll(".l1,.l2,.l3").forEach(x => x.classList.add("on"));
+  P.glow.style.opacity = 0; P.glow.classList.remove("pulse"); P.wIdx = -1;
+  P.slots.forEach((sl, j) => { sl.el.style.transition = `transform ${0.45 * k}s cubic-bezier(.4,0,.2,1)`; sl.el.style.zIndex = j === wi ? 10 : j; sl.el.style.transform = `translate(${w.x + (j - wi) * 2}px, ${-14 - (j - wi) * 2}px) rotate(${(j - wi) * 4}deg)`; });
+  setTimeout(() => {
+    const to = presCentre(E.res.winner === uid && !isTV ? $("meSeat") : V.seat(E.res.winner), V.tEl) || [V.tEl.clientWidth / 2, V.tEl.clientHeight + 300];
+    sfx("sweep");
+    P.slots.forEach((sl, j) => sl.el.animate([
+      { transform: sl.el.style.transform, opacity: 1 },
+      { transform: `translate(${(w.x + to[0] - sl.w / 2) / 2}px, ${Math.min(to[1], 0) / 2 - 90}px) rotate(${(j - wi) * 4 + 20}deg) scale(0.7)`, opacity: 1, offset: 0.5 },
+      { transform: `translate(${to[0] - sl.w / 2}px, ${to[1] - sl.w * 0.7}px) rotate(40deg) scale(0.25)`, opacity: 0 }
+    ], { duration: 700 * k, easing: "cubic-bezier(.5,0,.6,1)", fill: "forwards" }));
+    setTimeout(() => {
+      const seat = E.res.winner === uid && !isTV ? $("meSeat") : V.seat(E.res.winner);
+      if (seat) { const r = seat.getBoundingClientRect(); if (r.width) { const sp = document.createElement("div"); sp.className = "splash"; sp.style.left = r.left + r.width / 2 + "px"; sp.style.top = r.top + Math.min(r.height / 2, 30) + "px"; document.body.appendChild(sp); setTimeout(() => sp.remove(), 800); } }
+      b.classList.remove("on"); if (V.bars) V.bars.style.opacity = 0;
+    }, 700 * k);
+    setTimeout(() => { presClear(P); P.busy = false; presRun(P); }, 700 * k + 380);
+  }, 480 * k);
+}
+function presClear(P) {
+  if (P.ending) P.ending.steps.forEach(clearTimeout);
+  P.ending = null; P.wIdx = -1;
+  P.slots.forEach(sl => sl.el.remove()); P.slots = [];
+  if (P.glow) { P.glow.style.opacity = 0; P.glow.classList.remove("pulse"); }
+  if (P.banner) { P.banner.classList.remove("on"); P.banner.querySelectorAll(".on").forEach(x => x.classList.remove("on")); }
+  if (P.hurry) P.hurry.classList.remove("on");
+  if (P.V.bars) { P.V.bars.innerHTML = ""; P.V.bars.style.opacity = 1; }
+  P.V.tEl.querySelectorAll(".ripple").forEach(x => x.remove());
+}
+function presHurry(P) { if (P && P.ending && !P.ending.done && !P.ending.inst) { presGather(P, true); return true; } return false; }
+
 function renderTable(s, V) {
-  const trick = trickOf(s), tEl = V.tEl, me = V.me, who = id => id === me ? "You" : esc(nameOf(id));
-  if (me) { const n = order().length, avail = (V.host.clientWidth || 360) - 16, tw = Math.max(44, Math.min(room.tv ? 68 : 76, Math.floor((avail - 6 * (n - 1)) / n))); V.host.style.setProperty("--tw", tw + "px"); }
-  const live = trick.length ? resolve(trick) : null;
-  const sweeping = s.phase === "trickEnd" && serverNow() - s.at > TRICK_MS - 900;
-  const animateFrom = (lastRound === s.round && trick.length === lastTrickLen + 1) ? trick.length - 1 : -1;
-  const tKey = s.round + "|" + s.trickNo + "|" + s.phase + "|" + trick.map(t => t.c).join(",") + "|" + (s.turn || "");
-  const same = tEl.dataset.key === tKey; tEl.dataset.key = tKey;
-  const centre = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width ? [r.left + r.width / 2, r.top + r.height / 2] : null; };
-  if (same) {} else if (trick.length) {
-    tEl.innerHTML = trick.map((t, i) => {
-      let fx = 0, fy = -80;
-      const a = i === animateFrom ? centre(V.seat(t.p)) : null;
-      if (a) { const b = tEl.getBoundingClientRect(); fx = a[0] - (b.left + b.width / 2); fy = a[1] - (b.top + b.height / 2); }
-      return `<div class="tslot ${i === animateFrom ? "fly" : ""} ${live && live.winner === t.p ? "win" : ""}" style="--fx:${fx}px;--fy:${fy}px">${cardHTML(t.c, "", i === animateFrom ? '<i class="back-face"></i>' : "")}<span class="who">${who(t.p)}</span></div>`;
-    }).join("");
-    if (animateFrom >= 0) setTimeout(() => sfx("snap"), reduceMotion ? 0 : 380);
-  } else {
-    const ld = s.phase === "play" ? s.turn : null;
-    tEl.innerHTML = `<div class="empty">${ld && ld === me ? "You lead this trick" : ld ? esc(nameOf(ld)) + " leads this trick" : ""}</div>`;
+  const trick = trickOf(s), me = V.me, who = id => id === me ? "You" : esc(nameOf(id));
+  if (me) {
+    const n = order().length, avail = (V.host.clientWidth || 360) - 16, th = room.tv ? 1e9 : V.host.clientHeight || 400;
+    const tw = Math.max(34, Math.min(room.tv ? 68 : 76, Math.floor((avail - 6 * (n - 1)) / n), Math.floor((th - (V.bars && getComputedStyle(V.bars).display === "none" ? 74 : 130)) / 1.43)));
+    V.host.style.setProperty("--tw", tw + "px");
   }
-  if (!same) { tEl.classList.remove("sweep"); tEl.classList.toggle("ended", s.phase === "trickEnd"); }
-  if (s.phase === "trickEnd" && !same) {
-    const go = () => {
-      const a = centre(V.seat(s.res.winner)), b = tEl.getBoundingClientRect();
-      tEl.style.setProperty("--sx", (a ? a[0] - (b.left + b.width / 2) : 0) + "px"); tEl.style.setProperty("--sy", (a ? a[1] - (b.top + b.height / 2) : -200) + "px");
-      tEl.classList.add("sweep"); sfx("sweep");
-    };
-    if (sweeping) go(); else { clearTimeout(window.__sweepT); window.__sweepT = setTimeout(() => { if (room && room.state.phase === "trickEnd" && room.state.seq === s.seq) go(); }, Math.max(0, s.at + TRICK_MS - 900 - serverNow())); }
-  }
-  lastTrickLen = trick.length; lastRound = s.round;
-  // suit counts
-  const counts = live ? live.counts : {};
-  if (!same) V.bars.innerHTML = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(k => { const su = SUITS.find(x => x.k === k); return `<div class="bar"><span class="lab" style="color:${su.col}">${su.name}</span><span class="segs">${Array.from({ length: counts[k] }, () => `<span class="seg" style="background:${su.col}"></span>`).join("")}</span></div>`; }).join("");
-  // status line and result banner
+  presSync(V.pres, s);
   const st = V.st; st.classList.remove("mine");
-  V.host.querySelectorAll(".banner").forEach(b => { if (b.dataset.seq !== String(s.seq)) b.remove(); });
   if (s.phase === "play") {
     if (me && s.turn === me) {
       st.classList.add("mine");
       const lc = legalCards(myHand, trick, s.first);
-      st.textContent = !trick.length ? (s.first != null && myHand.includes(s.first) ? `Your lead: you must open with the ${s.first}` : "Your lead: play any card") : lc.length === myHand.length && !myHand.some(c => new Set(trick.map(t => suitOf(t.c).k)).has(suitOf(c).k)) ? "Your turn: no match, so play anything" : "Your turn: match a suit already on the table";
-    } else st.textContent = me ? `Waiting for ${nameOf(s.turn)}…` : `${nameOf(s.turn)}'s turn` + (s.first != null && !trick.length ? ` · opening with the ${s.first}` : "");
-    if (s.res && s.res.picked && s.trickNo > 1 && !trick.length) st.textContent = `${who(s.res.pickedBy)} sent ${s.res.picked === me ? "you" : esc(nameOf(s.res.picked))} to lead` + (me && s.turn === me ? ". Your lead: play any card" : "");
-  } else if (s.phase === "trickEnd") {
-    st.textContent = "";
-    if (!V.host.querySelector(`.banner[data-seq="${s.seq}"]`)) {
-      const r = s.res, su = SUITS.find(x => x.k === suitOf(r.card).k), counts2 = Object.values(r.counts).sort((a, b) => b - a);
-      const why = r.tied.length > 1 ? `${r.tied.map(k => SUITS.find(x => x.k === k).name).join(" and ")} tie at ${r.most}, highest card wins.` : Object.keys(r.counts).length > 1 ? `${su.name} has the most cards (${counts2.join(" vs ")}).` : `All ${su.name}.`;
-      const b = document.createElement("div"); b.className = "banner"; b.dataset.seq = s.seq;
-      b.innerHTML = `${why}<br><span style="color:var(--gold)">${r.winner === me ? "You take" : esc(nameOf(r.winner)) + " takes"} the trick with the ${r.card}.</span>${r.cap ? '<br><span class="cap">Captain\'s card! ' + (r.winner === me ? "You choose" : esc(nameOf(r.winner)) + " chooses") + " who leads next</span>" : ""}`;
-      V.host.appendChild(b);
-      if (r.cap) setTimeout(() => sfx("captain"), 250);
-      if (me && r.winner === me && navigator.vibrate) navigator.vibrate([30, 40, 30]);
-    }
+      st.textContent = !trick.length ? (s.first != null && myHand.includes(s.first) ? `Your lead: you must open with the ${s.first}` : "Your lead: play any card") : lc.length === myHand.length && !myHand.some(c => new Set(trick.map(t => suitOf(t.c).k)).has(suitOf(c).k)) ? "Your turn: no match, so play anything" : "Your turn: match a suit on the table";
+    } else st.textContent = !trick.length ? `${who(s.turn)} ${me ? "leads" : "leads"} this trick` + (s.first != null ? ` with the ${s.first}` : "") : me ? `Waiting for ${nameOf(s.turn)}…` : `${nameOf(s.turn)}'s turn`;
+    if (s.res && s.res.picked && s.trickNo > 1 && !trick.length) st.textContent = `${who(s.res.pickedBy)} sent ${s.res.picked === me ? "you" : esc(nameOf(s.res.picked))} to lead` + (me && s.turn === me ? ". Play any card" : "");
   } else if (s.phase === "captain") st.textContent = s.res.winner === me ? "Choose who leads next" : `${nameOf(s.res.winner)} is choosing who leads next…`;
   else st.textContent = "";
 }
@@ -1237,7 +1390,7 @@ const NEXT_MS = 15000; // with a TV, the next round deals itself after this long
 let tvDealt = null, tvArrowKey = null, prevTaken = {}, prevPlayed = new Set();
 function renderTV() {
   const s = room.state;
-  if (s.phase === "lobby") { show("vTVLobby"); tvOverlay(null); return renderTVLobby(); }
+  if (s.phase === "lobby") { show("vTVLobby"); tvOverlay(null); if (presenters.tv) presReset(presenters.tv); return renderTVLobby(); }
   show("vTVGame");
   $("tvRound").textContent = s.phase === "gameOver" ? "Final scores" : `Round ${s.round} · Trick ${Math.min(s.trickNo, s.perHand)} of ${s.perHand}`;
   $("tvCode2").textContent = code;
@@ -1261,6 +1414,7 @@ function renderTVLobby() {
   $("tvStart").disabled = n < MIN_P || n > MAX_P;
   $("tvHint").textContent = n < MIN_P ? `Need at least ${MIN_P} sailors (${MIN_P - n} more)` : `${n} sailors · ${deckFor(n).length / n} cards each · a ship sinks at ${sinkAt(n)} points. ${nameOf(lead())} can also set sail from their phone.`;
 }
+$("tvTable").addEventListener("click", () => presHurry(presenters.tv));
 $("tvStart").onclick = async () => { if (!isTV) return; $("tvStart").disabled = true; await roomRef.child("settings").update({ preview: false, cross: $("tvCross").checked, timer: +$("tvTimer").value, bots: $("tvBots").value }); await startGame(); };
 $("tvCross").onchange = () => { if (isTV) changeSetting({ cross: $("tvCross").checked }); };
 $("tvTimer").onchange = () => { if (isTV) changeSetting({ timer: +$("tvTimer").value }); };
